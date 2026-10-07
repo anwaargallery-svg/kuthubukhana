@@ -1,0 +1,239 @@
+/* Principal Executive Portal Stylesheet - Kuthbukhana Anwariyya */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --principal-primary: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    --principal-accent: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    --success-gradient: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    --danger-gradient: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%);
+    --warning-gradient: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+    --bg-main: #f8fafc;
+    --card-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: var(--bg-main);
+    color: #0f172a;
+    min-height: 100vh;
+}
+
+/* Header Navbar */
+.navbar-executive {
+    background: var(--principal-primary) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.navbar-brand {
+    font-family: 'Outfit', sans-serif;
+}
+
+.status-dot-principal {
+    width: 9px;
+    height: 9px;
+    background-color: #3b82f6;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 10px #3b82f6;
+    animation: pulsePrincipal 2s infinite;
+}
+
+@keyframes pulsePrincipal {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+/* Principal Banner Header */
+.principal-banner {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 2rem 2.25rem;
+    box-shadow: var(--card-shadow);
+    border: 1px solid #e2e8f0;
+    position: relative;
+    overflow: hidden;
+}
+
+.principal-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: var(--principal-accent);
+}
+
+/* Executive KPI Metric Cards */
+.principal-kpi-card {
+    border: none;
+    border-radius: 18px;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+
+.principal-kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.principal-kpi-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #ffffff;
+}
+
+.principal-kpi-value {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+/* Live Search Panel */
+.search-panel-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 1.75rem;
+    box-shadow: var(--card-shadow);
+    border: 1px solid #e2e8f0;
+}
+
+.principal-search-input {
+    border-radius: 14px;
+    padding: 0.85rem 1.25rem 0.85rem 2.75rem;
+    font-size: 1.05rem;
+    border: 2px solid #cbd5e1;
+    transition: all 0.25s ease;
+    font-weight: 500;
+}
+
+.principal-search-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+
+.search-input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.25rem;
+    color: #64748b;
+}
+
+/* Books Grid & Availability Cards */
+.book-avail-card {
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid #e2e8f0;
+    box-shadow: var(--card-shadow);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.book-avail-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 18px 30px -5px rgba(15, 23, 42, 0.12);
+    border-color: #93c5fd;
+}
+
+.book-avail-cover {
+    width: 90px;
+    height: 125px;
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background-color: #e2e8f0;
+}
+
+.book-avail-placeholder {
+    width: 90px;
+    height: 125px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Status Badges */
+.badge-principal-status {
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 0.5em 0.9em;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-in-stock {
+    background: #d1fae5 !important;
+    color: #065f46 !important;
+    border: 1px solid #a7f3d0;
+}
+
+.status-issued {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+    border: 1px solid #fecaca;
+}
+
+.status-hold {
+    background: var(--danger-gradient) !important;
+    color: #ffffff !important;
+    animation: pulseHold 2s infinite;
+}
+
+@keyframes pulseHold {
+    0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.6); }
+    70% { box-shadow: 0 0 0 8px rgba(225, 29, 72, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
+}
+
+/* Modal Styling */
+.modal-content {
+    border-radius: 22px;
+    border: none;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.modal-header.bg-principal {
+    background: var(--principal-primary) !important;
+    color: #ffffff;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Principal & Executive Portal - Kuthbukhana Anwariyya</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../../../style.css">
+    <link rel="stylesheet" href="principal.css">
+    <script defer src="https://code.jquery.com/jquery-4.0.0.js"
+        integrity="sha256-9fsHeVnKBvqh3FB2HYu7g2xseAZ5MlN6Kz/qnkASV8U=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <script defer src="../../../script.js"></script>
+    <script defer src="principal.js"></script>
+</head>
+
+<body class="bg-light">
+    <!-- Executive Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-executive shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="../../../../index.html"
+                onclick="gohome(); return false;">
+                <img class="img-fluid rounded-circle border border-2 border-primary" src="../../../images/image.png" alt="Library Logo"
+                    style="width: 40px; height: 40px; object-fit: cover;">
+                <div class="d-flex flex-column">
+                    <span class="lh-1 fs-5">Kuthbukhana Anwariyya</span>
+                    <small class="text-white-50 fw-normal d-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                        <span class="status-dot-principal"></span> Principal & Executive Portal
+                    </small>
+                </div>
+            </a>
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-outline-light btn-sm fw-semibold" onclick="gohome()"><i class="bi bi-house-door me-1"></i> Home</button>
+                <button class="btn btn-outline-primary btn-sm fw-semibold" onclick="openlibrary()"><i class="bi bi-book me-1"></i> Open Library</button>
+                <button class="btn btn-outline-success btn-sm fw-semibold" onclick="checkledger()"><i class="bi bi-journal-text me-1"></i> Check Ledger</button>
+                <button class="btn btn-primary btn-sm active fw-semibold"><i class="bi bi-person-badge me-1"></i> Principal View</button>
+                <button class="btn btn-outline-danger btn-sm fw-semibold" onclick="goadmin()"><i class="bi bi-speedometer2 me-1"></i> Admin Dashboard</button>
+                <button class="btn btn-outline-danger btn-sm fw-bold btn-close-library-toggle shadow-sm" onclick="toggleCloseLibrary()"><i class="bi bi-lock-fill me-1"></i> Close Library</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Executive Container -->
+    <div class="container py-5">
+
+        <!-- Executive Banner -->
+        <div class="principal-banner mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <span class="badge bg-primary rounded-pill mb-2 px-3 py-1"><i class="bi bi-shield-check me-1"></i> Executive Portal</span>
+                <h1 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                    <i class="bi bi-search-heart text-primary"></i> Principal's Book Availability & Search Hub
+                </h1>
+                <p class="text-muted mb-0 small">Real-time library catalog search, stock availability checking, and borrower lookup</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-outline-secondary fw-semibold shadow-sm" onclick="printExecutiveReport()">
+                    <i class="bi bi-printer me-1"></i> Print Stock Report
+                </button>
+                <button class="btn btn-primary fw-semibold shadow-sm" onclick="clearPrincipalSearch()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Reset Search
+                </button>
+            </div>
+        </div>
+
+        <!-- Executive Stat Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="card principal-kpi-card h-100">
+                    <div class="card-body p-4 d-flex align-items-center gap-3">
+                        <div class="principal-kpi-icon" style="background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);">
+                            <i class="bi bi-journal-bookmark"></i>
+                        </div>
+                        <div>
+                            <small class="text-uppercase fw-bold text-muted" style="font-size: 0.72rem;">Total Catalog Titles</small>
+                            <h2 id="principalTotalBooks" class="principal-kpi-value mb-0 text-dark">0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card principal-kpi-card h-100">
+                    <div class="card-body p-4 d-flex align-items-center gap-3">
+                        <div class="principal-kpi-icon" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div>
+                            <small class="text-uppercase fw-bold text-muted" style="font-size: 0.72rem;">Available (In Stock)</small>
+                            <h2 id="principalInStock" class="principal-kpi-value mb-0 text-success">0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card principal-kpi-card h-100">
+                    <div class="card-body p-4 d-flex align-items-center gap-3">
+                        <div class="principal-kpi-icon" style="background: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%);">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
+                        <div>
+                            <small class="text-uppercase fw-bold text-muted" style="font-size: 0.72rem;">Issued (Out of Stock)</small>
+                            <h2 id="principalIssuedCount" class="principal-kpi-value mb-0 text-danger">0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card principal-kpi-card h-100">
+                    <div class="card-body p-4 d-flex align-items-center gap-3">
+                        <div class="principal-kpi-icon" style="background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);">
+                            <i class="bi bi-shield-lock"></i>
+                        </div>
+                        <div>
+                            <small class="text-uppercase fw-bold text-muted" style="font-size: 0.72rem;">Admin Hold Reserved</small>
+                            <h2 id="principalHoldCount" class="principal-kpi-value mb-0 text-warning">0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Principal Live Search & Availability Panel -->
+        <div class="search-panel-card mb-4">
+            <div class="row g-3 align-items-center mb-3">
+                <div class="col-lg-6">
+                    <div class="position-relative">
+                        <i class="bi bi-search search-input-icon"></i>
+                        <input type="text" id="principalSearchInput" class="form-control principal-search-input"
+                            placeholder="Type book name, author, or book ID (e.g. Al-Fiqh, SC-101)..."
+                            oninput="renderPrincipalView()">
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <select id="principalSectionFilter" class="form-select form-select-lg border-2" style="border-radius: 14px; font-size: 0.95rem;" onchange="renderPrincipalView()">
+                        <option value="all">All Library Sections</option>
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <select id="principalStatusFilter" class="form-select form-select-lg border-2" style="border-radius: 14px; font-size: 0.95rem;" onchange="renderPrincipalView()">
+                        <option value="all">All Stock Statuses</option>
+                        <option value="Available">🟢 In Stock Only</option>
+                        <option value="Issued">🔴 Issued Out of Stock Only</option>
+                        <option value="Admin Hold">⛔ Admin Hold Reserved Only</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center border-top pt-3 flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span id="principalResultsBadge" class="badge bg-dark rounded-pill px-3 py-2 fs-6">0 Books Found</span>
+                    <small class="text-muted fw-semibold" id="principalSearchMeta">Real-time availability status updated</small>
+                </div>
+                <div class="btn-group" role="group" aria-label="View Switcher">
+                    <button type="button" class="btn btn-outline-secondary btn-sm active" id="btnViewCards" onclick="switchPrincipalViewMode('cards')">
+                        <i class="bi bi-grid-fill me-1"></i> Book Cards View
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnViewTable" onclick="switchPrincipalViewMode('table')">
+                        <i class="bi bi-table me-1"></i> Data Table View
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Book Cards Container (Default View) -->
+        <div id="principalCardsContainer" class="row g-4 mb-4">
+            <!-- Populated dynamically via principal.js -->
+        </div>
+
+        <!-- Book Table Container (Alternative View) -->
+        <div id="principalTableCard" class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4" style="display: none;">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Cover</th>
+                            <th>Book ID</th>
+                            <th>Section</th>
+                            <th>Book Title</th>
+                            <th>Author</th>
+                            <th>Availability Status</th>
+                            <th>Borrower / Hold Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="principalTableBody">
+                        <!-- Populated dynamically via principal.js -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Borrower Details Modal for Principal -->
+    <div class="modal fade" id="principalBorrowerModal" tabindex="-1" aria-labelledby="principalBorrowerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-principal text-white">
+                    <h5 class="modal-title fw-bold" id="principalBorrowerModalLabel"><i class="bi bi-person-lines-fill me-2"></i>Borrower & Book Status Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4" id="principalBorrowerModalBody">
+                    <!-- Populated dynamically via principal.js -->
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

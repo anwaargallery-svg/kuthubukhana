@@ -1,0 +1,101 @@
+{
+  "books": {
+    "H-001": {
+      "title": "صحيح البخاري",
+      "author": "imam bukhari",
+      "section": "H",
+      "sectionName": "HADHEES",
+      "cover": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4bd2JEXB-aRzdUSPX1J9reK-gGHFLwtruTpRBktFeJ_UCT68GTmENBJhU&s=10",
+      "status": "Issued",
+      "issuedTo": "SUHAIL (Roll #2)",
+      "issueDate": "2026-10-07",
+      "dueDate": "2026-10-18",
+      "allowedDays": 10
+    },
+    "H-002": {
+      "title": "swaheeh muslim",
+      "author": "imam muslim",
+      "section": "H",
+      "sectionName": "HADHEES",
+      "cover": "https://m.media-amazon.com/images/I/81cLxtv4FrL._UF1000,1000_QL80_.jpg",
+      "status": "Available",
+      "issuedTo": null,
+      "issueDate": null
+    }
+  },
+  "ledger": [
+    {
+      "id": 1791368430477,
+      "rollNo": "2",
+      "studentName": "SUHAIL",
+      "classDiv": "9",
+      "bookId": "H-001",
+      "bookTitle": "صحيح البخاري",
+      "author": "imam bukhari",
+      "issueDate": "2026-10-07",
+      "dueDate": "2026-10-18",
+      "allowedDays": 10,
+      "returnDate": null,
+      "status": "Issued",
+      "fineAmount": 0,
+      "finePaid": false
+    },
+    {
+      "id": 1791368409132,
+      "rollNo": "3",
+      "studentName": "YASEEN",
+      "classDiv": "9",
+      "bookId": "H-001",
+      "bookTitle": "صحيح البخاري",
+      "author": "imam bukhari",
+      "issueDate": "2026-10-07",
+      "dueDate": "2026-10-18",
+      "allowedDays": 10,
+      "returnDate": "2026-10-07",
+      "status": "Returned",
+      "fineAmount": 0,
+      "finePaid": false
+    },
+    {
+      "id": 1791368386245,
+      "rollNo": "1",
+      "studentName": "rishin",
+      "classDiv": "9",
+      "bookId": "H-001",
+      "bookTitle": "صحيح البخاري",
+      "author": "imam bukhari",
+      "issueDate": "2026-10-07",
+      "dueDate": "2026-10-18",
+      "allowedDays": 10,
+      "returnDate": "2026-10-07",
+      "status": "Returned",
+      "fineAmount": 0,
+      "finePaid": false
+    }
+  ],
+  "categories": {
+    "H": "HADHEES",
+    "PS": "PSYCOLOGY",
+    "FQ": "FIQH",
+    "TR": "THAFSEER",
+    "MQ": "MANTHIQ",
+    "QS": "QUIZ",
+    "AQ": "AQEEDHA",
+    "NL": "NOVAL",
+    "IS": "ISLAMIC STUDES",
+    "PH": "PROPHETS",
+    "BS": "BALA SAHITYAM",
+    "ST": "STORY",
+    "STUDY": "SY",
+    "SJ": "SUNNATH JAMAATH",
+    "WH": "WORLD HISTORY",
+    "PK": "PRASANGA KALA",
+    "AL": "AWLIYA",
+    "SM": "SAMASTHA",
+    "GK": "GENARAL KNOWLEDGE",
+    "LR": "LITRATUR",
+    "BH": "BIOGRAPHY"
+  },
+  "students": [],
+  "isLibraryClosed": false
+}

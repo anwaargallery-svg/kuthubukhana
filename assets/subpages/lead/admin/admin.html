@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Kuthbukhana Anwariyya</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../../../style.css">
+    <link rel="stylesheet" href="admin.css">
+    <script defer src="https://code.jquery.com/jquery-4.0.0.js"
+        integrity="sha256-9fsHeVnKBvqh3FB2HYu7g2xseAZ5MlN6Kz/qnkASV8U=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <script defer src="../../../script.js"></script>
+    <script defer src="admin.js"></script>
+</head>
+
+<body class="bg-light">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="../../../../index.html"
+                onclick="gohome(); return false;">
+                <img class="img-fluid rounded-circle border border-2 border-primary" src="../../../images/image.png" alt="Library Logo"
+                    style="width: 40px; height: 40px; object-fit: cover;">
+                <div class="d-flex flex-column">
+                    <span class="lh-1 fs-5">Kuthbukhana Anwariyya</span>
+                    <small class="text-muted fw-normal d-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                        <span class="status-dot"></span> System Live & Operational
+                    </small>
+                </div>
+            </a>
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-outline-light btn-sm" onclick="gohome()"><i class="bi bi-house-door me-1"></i>
+                    Home</button>
+                <button class="btn btn-outline-primary btn-sm" onclick="openlibrary()"><i class="bi bi-book me-1"></i>
+                    Open Library</button>
+                <button class="btn btn-outline-success btn-sm" onclick="checkledger()"><i
+                        class="bi bi-journal-text me-1"></i> Check Ledger</button>
+                <button class="btn btn-outline-info btn-sm" onclick="goprincipal()"><i
+                        class="bi bi-person-badge me-1"></i> Principal View</button>
+                <button class="btn btn-danger btn-sm active"><i class="bi bi-speedometer2 me-1"></i> Admin
+                    Dashboard</button>
+                <button class="btn btn-outline-danger btn-sm fw-bold btn-close-library-toggle shadow-sm" onclick="toggleCloseLibrary()"><i class="bi bi-lock-fill me-1"></i> Close Library</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container py-5">
+
+        <!-- Header Title Banner -->
+        <div class="dashboard-header-banner mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h1 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                    <i class="bi bi-speedometer2 text-danger"></i> Admin Management Dashboard
+                </h1>
+                <p class="text-muted mb-0 small">Overview of library inventory stock, category management, and administration</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap action-btn-group">
+                <button class="btn btn-outline-primary fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#studentModal">
+                    <i class="bi bi-people me-1"></i> Add / Upload Students
+                </button>
+                <button class="btn btn-outline-info fw-semibold shadow-sm" data-bs-toggle="modal"
+                    data-bs-target="#addCategoryModal">
+                    <i class="bi bi-tags me-1"></i> Manage Categories
+                </button>
+                <button class="btn btn-outline-warning text-dark fw-semibold shadow-sm" data-bs-toggle="modal"
+                    data-bs-target="#importModal">
+                    <i class="bi bi-upload me-1"></i> Import Data (JSON)
+                </button>
+                <button class="btn btn-outline-success fw-semibold shadow-sm" onclick="openCustomExportModal()">
+                    <i class="bi bi-file-earmark-arrow-down me-1"></i> Custom Data Export
+                </button>
+                <button class="btn btn-outline-info fw-semibold shadow-sm" onclick="openManageClassesModal()">
+                    <i class="bi bi-mortarboard-fill me-1"></i> Manage Classes
+                </button>
+                <button class="btn btn-outline-dark fw-semibold shadow-sm" onclick="openBatchBarcodeModal()">
+                    <i class="bi bi-upc-scan me-1"></i> Print Barcodes
+                </button>
+                <button class="btn btn-outline-danger fw-semibold shadow-sm" onclick="confirmResetDefaultData()">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Default Data
+                </button>
+                <button class="btn btn-primary fw-semibold shadow-sm" data-bs-toggle="modal"
+                    data-bs-target="#addBookModal">
+                    <i class="bi bi-plus-circle me-1"></i> Add New Book
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Metric Stat Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="card kpi-card bg-primary shadow-sm h-100">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase fw-semibold opacity-75 mb-1" style="font-size: 0.78rem; letter-spacing: 0.5px;">Total Titles</h6>
+                            <h2 id="adminTotalBooks" class="kpi-value mb-0">0</h2>
+                        </div>
+                        <i class="bi bi-journal-bookmark kpi-icon-bg"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card kpi-card bg-success shadow-sm h-100">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase fw-semibold opacity-75 mb-1" style="font-size: 0.78rem; letter-spacing: 0.5px;">In Stock (Available)</h6>
+                            <h2 id="adminInStock" class="kpi-value mb-0">0</h2>
+                        </div>
+                        <i class="bi bi-check-circle kpi-icon-bg"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card kpi-card bg-danger shadow-sm h-100">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase fw-semibold opacity-75 mb-1" style="font-size: 0.78rem; letter-spacing: 0.5px;">Out of Stock (Issued)</h6>
+                            <h2 id="adminOutOfStock" class="kpi-value mb-0">0</h2>
+                        </div>
+                        <i class="bi bi-exclamation-octagon kpi-icon-bg"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card kpi-card bg-warning shadow-sm h-100">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase fw-semibold opacity-75 mb-1" style="font-size: 0.78rem; letter-spacing: 0.5px;">Admin Hold (Reserved)</h6>
+                            <h2 id="adminHoldCount" class="kpi-value mb-0">0</h2>
+                        </div>
+                        <i class="bi bi-shield-lock kpi-icon-bg"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Library Sections Showcase Grid Section -->
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div>
+                    <h3 class="h5 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                        <i class="bi bi-grid-3x3-gap-fill text-primary"></i> Library Sections & Accession Keywords
+                    </h3>
+                    <p class="text-muted small mb-0">Browse library departments, accession prefixes, and section stock metrics</p>
+                </div>
+                <button class="btn btn-sm btn-outline-info fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                    <i class="bi bi-plus-circle me-1"></i> Add / Manage Sections
+                </button>
+            </div>
+            
+            <div id="sectionsCardsGrid" class="row g-3">
+                <!-- Dynamically generated section cards via admin.js -->
+            </div>
+        </div>
+
+        <!-- Category Summary Quick Filter Strip -->
+        <div class="category-summary-strip mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3 shadow-sm">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="fw-bold text-dark me-1" style="font-size: 0.85rem;"><i class="bi bi-funnel-fill text-primary me-1"></i> Quick Filter:</span>
+                <div id="categoryChipsContainer" class="d-flex flex-wrap gap-2">
+                    <!-- Dynamic chips generated via admin.js -->
+                </div>
+            </div>
+            <div class="text-muted small fw-semibold d-flex align-items-center gap-2">
+                <span id="filteredBookCountBadge" class="badge bg-primary rounded-pill px-3 py-2">0 Books</span>
+            </div>
+        </div>
+
+        <!-- Book Inventory Table Section -->
+        <div class="inventory-card">
+            <div class="inventory-card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <h4 class="h5 mb-0 fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-box-seam text-primary fs-4"></i> Book Inventory Stock Management
+                </h4>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <!-- Category / Section Filter -->
+                    <select id="adminSectionFilter" class="form-select form-select-sm admin-control-select" style="max-width: 190px;"
+                        onchange="renderAdminDashboard()">
+                        <option value="all">All Sections / Categories</option>
+                    </select>
+
+                    <!-- Status Filter -->
+                    <select id="adminStatusFilter" class="form-select form-select-sm admin-control-select" style="max-width: 170px;"
+                        onchange="renderAdminDashboard()">
+                        <option value="all">All Statuses</option>
+                        <option value="Available">In Stock (Available)</option>
+                        <option value="Issued">Issued (Out of Stock)</option>
+                        <option value="Admin Hold">Admin Hold (Reserved)</option>
+                    </select>
+
+                    <input type="text" id="adminSearchInput" class="form-control form-control-sm admin-search-box"
+                        style="max-width: 220px;" placeholder="Search title/author/ID..."
+                        oninput="renderAdminDashboard()">
+                    <button class="btn btn-sm btn-outline-light text-nowrap rounded-pill px-3" onclick="renderAdminDashboard()">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table inventory-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Cover</th>
+                                <th>Book ID</th>
+                                <th>Section Keyword</th>
+                                <th>Book Title</th>
+                                <th>Author Name</th>
+                                <th>Stock Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminInventoryTableBody">
+                            <!-- Populated dynamically via admin.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Add New Book Modal with Device Image Upload & Section Selection -->
+    <div class="modal fade" id="addBookModal" tabindex="-1" aria-labelledby="addBookModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="addBookModalLabel"><i class="bi bi-plus-circle me-2"></i>Add New
+                        Book to Inventory</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <form id="addBookForm" onsubmit="addAdminBook(event)">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Library Section / Category Keyword</label>
+                            <select id="newBookSection" class="form-select" onchange="autoSuggestBookId(this.value)">
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Book ID / Accession Number</label>
+                            <input type="text" id="newBookId" class="form-control" placeholder="e.g. SC-106 or IS-106"
+                                oninput="updateLiveBookBarcodePreview()" required>
+                            <small class="text-muted d-block mb-1">Include section code prefix (e.g. SC-106 for Science)</small>
+                            <div id="newBookBarcodePreview" class="mt-2 text-center"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Book Title</label>
+                            <input type="text" id="newBookTitle" class="form-control" placeholder="Enter book title"
+                                required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Author Name</label>
+                            <input type="text" id="newBookAuthor" class="form-control" placeholder="Enter author name">
+                        </div>
+
+                        <!-- Device File Upload -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-primary"><i class="bi bi-upload me-1"></i>Upload
+                                Cover Image from Device</label>
+                            <input type="file" id="newBookCoverFile" accept="image/*" class="form-control"
+                                onchange="previewUploadCover(this)">
+                            <small class="text-muted">Select image file from computer or phone</small>
+                        </div>
+
+                        <!-- Image Upload Preview Container -->
+                        <div id="uploadPreviewContainer" class="mb-3 text-center" style="display: none;">
+                            <small class="d-block text-success fw-semibold mb-1"><i
+                                    class="bi bi-check-circle me-1"></i>Selected Image Preview:</small>
+                            <img id="uploadPreviewImg" src="" alt="Upload Preview" class="rounded shadow border"
+                                style="max-height: 120px; object-fit: cover;">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-secondary">OR Enter Online Image URL</label>
+                            <input type="url" id="newBookCover" class="form-control form-control-sm"
+                                placeholder="https://covers.openlibrary.org/b/id/...">
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary fw-semibold"><i class="bi bi-check-lg me-1"></i>
+                            Add to Inventory</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Book Details Modal (Admin Dashboard Exclusive) -->
+    <div class="modal fade" id="editBookModal" tabindex="-1" aria-labelledby="editBookModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold" id="editBookModalLabel"><i
+                            class="bi bi-pencil-square me-2 text-primary"></i>Edit Book Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <form id="editBookForm" onsubmit="saveEditedBookDetails(event)">
+                    <div class="modal-body p-4">
+                        <input type="hidden" id="editBookOriginalId">
+
+                        <div class="mb-3 text-center">
+                            <img id="editBookPreviewImg" src="" alt="Cover" class="rounded shadow border mb-2"
+                                style="width: 90px; height: 125px; object-fit: cover;">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Book ID / Accession Number</label>
+                            <input type="text" id="editBookId" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Book Title</label>
+                            <input type="text" id="editBookTitle" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Author Name</label>
+                            <input type="text" id="editBookAuthor" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Section / Category Keyword</label>
+                            <select id="editBookSection" class="form-select">
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Inventory Status & Admin Hold</label>
+                            <select id="editBookStatus" class="form-select fw-bold">
+                                <option value="Available" class="text-success">Available (In Stock)</option>
+                                <option value="Issued" class="text-danger">Issued (Out of Stock)</option>
+                                <option value="Admin Hold" class="text-danger fw-bold">⛔ Admin Hold (DO NOT ISSUE)
+                                </option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-primary"><i class="bi bi-upload me-1"></i>Upload
+                                New Cover Image from Device</label>
+                            <input type="file" id="editBookDetailCoverFile" accept="image/*" class="form-control"
+                                onchange="previewEditDetailCover(this)">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-secondary">OR Image URL</label>
+                            <input type="url" id="editBookDetailCoverUrl" class="form-control form-control-sm"
+                                placeholder="https://...">
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary fw-semibold"><i class="bi bi-save me-1"></i> Save
+                            Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Custom Data Modal -->
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold" id="exportModalLabel"><i class="bi bi-download me-2"></i>Export
+                        Custom Library Data</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Data Source to Export</label>
+                        <select id="exportDataType" class="form-select">
+                            <option value="inventory">Book Inventory Data (Titles, ID, Status, Section)</option>
+                            <option value="ledger">Transaction Ledger Records (Issues, Returns, Students)</option>
+                            <option value="students">Student Directory Data (Roll No, Student Name, Class & Division)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">File Format</label>
+                        <select id="exportFileFormat" class="form-select">
+                            <option value="csv">CSV File (.csv - Excel compatible)</option>
+                            <option value="json">JSON File (.json - Raw Data Format)</option>
+                            <option value="pdf">PDF Document (.pdf - Printable Report)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-people-fill text-primary me-1"></i>Filter by Class & Division</label>
+                        <select id="exportClassFilter" class="form-select">
+                            <option value="all">🎓 All Classes & Divisions</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Filter by Category / Section (Inventory)</label>
+                        <select id="exportSectionFilter" class="form-select">
+                            <option value="all">All Sections / Categories</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Filter by Stock Status</label>
+                        <select id="exportStatusFilter" class="form-select">
+                            <option value="all">All Statuses</option>
+                            <option value="Available">Available (In Stock)</option>
+                            <option value="Issued">Issued (Out of Stock)</option>
+                            <option value="Admin Hold">Admin Hold Only</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success fw-semibold" onclick="processCustomExport()"><i
+                            class="bi bi-file-earmark-arrow-down me-1"></i> Export Data / PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Custom Data Modal (JSON File) -->
+    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title fw-bold" id="importModalLabel"><i class="bi bi-upload me-2"></i>Import Custom
+                        Data from JSON</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="importDataForm" onsubmit="processCustomImport(event)">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Target Data Destination</label>
+                            <select id="importDataType" class="form-select">
+                                <option value="inventory">Book Inventory Stock (`libraryBooks`)</option>
+                                <option value="ledger">Transaction Ledger Records (`libraryLedger`)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Select JSON File from Device</label>
+                            <input type="file" id="importJsonFile" accept=".json,application/json" class="form-control"
+                                required>
+                            <small class="text-muted">Choose an exported `.json` file from your computer or
+                                phone</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Import Method</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="importMode" id="importMerge"
+                                    value="merge" checked>
+                                <label class="form-check-label" for="importMerge">
+                                    <strong>Merge Data:</strong> Add & update records without deleting existing items
+                                </label>
+                            </div>
+                            <div class="form-check mt-1">
+                                <input class="form-check-input" type="radio" name="importMode" id="importOverwrite"
+                                    value="overwrite">
+                                <label class="form-check-label text-danger" for="importOverwrite">
+                                    <strong>Overwrite Database:</strong> Replace existing data completely with imported
+                                    file
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning text-dark fw-semibold"><i
+                                class="bi bi-file-earmark-arrow-up me-1"></i> Start JSON Import</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload / Update Book Cover Modal (Admin Only) -->
+    <div class="modal fade" id="updateCoverModal" tabindex="-1" aria-labelledby="updateCoverModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold" id="updateCoverModalLabel"><i
+                            class="bi bi-upload me-2 text-info"></i>Upload Book Cover (Dashboard Only)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <form id="updateCoverForm" onsubmit="saveAdminBookCover(event)">
+                    <div class="modal-body p-4">
+                        <input type="hidden" id="editCoverBookId">
+
+                        <div class="text-center mb-3">
+                            <label class="form-label fw-semibold d-block">Current Cover Preview</label>
+                            <img id="editCoverCurrentImg" src="" alt="Current Cover" class="rounded shadow border mb-2"
+                                style="width: 100px; height: 140px; object-fit: cover;">
+                            <h6 id="editCoverBookTitle" class="fw-bold text-dark mb-0">Book Title</h6>
+                            <small id="editCoverBookMeta" class="text-muted">ID: #101</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-primary"><i
+                                    class="bi bi-folder2-open me-1"></i>Select New Cover Image from Device</label>
+                            <input type="file" id="editBookCoverFile" accept="image/*" class="form-control"
+                                onchange="previewUpdateCover(this)">
+                            <small class="text-muted">Choose an image file (.png, .jpg, .jpeg, .webp) from your
+                                computer</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-secondary">OR Enter Image URL</label>
+                            <input type="url" id="editBookCoverUrl" class="form-control form-control-sm"
+                                placeholder="https://covers.openlibrary.org/b/id/...">
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary fw-semibold"><i
+                                class="bi bi-cloud-upload me-1"></i> Save & Update Cover</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add / Remove Category / Section Modal -->
+    <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header bg-primary text-white border-0 py-3 px-4">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="addCategoryModalLabel">
+                        <i class="bi bi-folder-plus fs-4"></i> Manage Categories & Sections
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <!-- Create Category Form Card -->
+                    <div class="card border-0 shadow-sm rounded-3 mb-4">
+                        <div class="card-body p-3">
+                            <h6 class="fw-bold text-primary mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-plus-circle-fill"></i> Add New Section Category
+                            </h6>
+                            <form id="addCategoryForm" onsubmit="addAdminCategory(event); return false;">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold text-dark small">Category Name <span class="text-danger">*</span></label>
+                                    <input type="text" id="newCategoryName" class="form-control" placeholder="e.g. Biology & Life Sciences" required autocomplete="off">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold text-dark small">Prefix Code / Short Keyword</label>
+                                    <input type="text" id="newCategoryCode" class="form-control text-uppercase" placeholder="e.g. BIO (Auto-generated if blank)" maxlength="8" autocomplete="off">
+                                    <div class="form-text text-muted" style="font-size: 0.78rem;">Short code used for book IDs (e.g. BIO-101, ARB-204)</div>
+                                </div>
+                                <button type="submit" class="btn btn-primary fw-bold w-100 py-2 shadow-sm">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Save Category
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Existing Categories List Card -->
+                    <div class="card border-0 shadow-sm rounded-3">
+                        <div class="card-body p-3">
+                            <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-tags-fill text-secondary"></i> Existing Categories & Sections
+                            </h6>
+                            <div id="existingCategoriesList" class="d-flex flex-column gap-2" style="max-height: 220px; overflow-y: auto;">
+                                <!-- Dynamically populated via admin.js -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top py-2 px-4">
+                    <button type="button" class="btn btn-secondary fw-semibold px-4" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Data Directory & Bulk Upload Modal -->
+    <div class="modal fade" id="studentModal" tabindex="-1" aria-labelledby="studentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="studentModalLabel"><i class="bi bi-people me-2"></i>Student Data Directory & Bulk Upload</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Tab Navigation -->
+                    <ul class="nav nav-pills mb-3 border-bottom pb-2" id="studentTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-bold" id="add-student-tab" data-bs-toggle="pill" data-bs-target="#tabAddStudent" type="button" role="tab">
+                                <i class="bi bi-person-plus me-1"></i> Add Student
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold" id="upload-student-tab" data-bs-toggle="pill" data-bs-target="#tabUploadStudent" type="button" role="tab">
+                                <i class="bi bi-file-earmark-arrow-up me-1"></i> Bulk Upload (JSON/CSV)
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold" id="list-student-tab" data-bs-toggle="pill" data-bs-target="#tabListStudent" type="button" role="tab" onclick="renderStudentDirectory()">
+                                <i class="bi bi-journal-text me-1"></i> Registered Students List
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="studentTabsContent">
+                        
+                        <!-- TAB 1: Add Single Student -->
+                        <div class="tab-pane fade show active" id="tabAddStudent" role="tabpanel">
+                            <form id="addStudentForm" onsubmit="addAdminStudent(event)">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">Admission / Roll No</label>
+                                        <input type="text" id="newStudentRoll" class="form-control" placeholder="e.g. 101" required>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label fw-semibold">Full Student Name</label>
+                                        <input type="text" id="newStudentName" class="form-control" placeholder="e.g. Muhammed Rashid" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">Class & Division</label>
+                                        <input type="text" id="newStudentClass" class="form-control" placeholder="e.g. 10-A" required>
+                                    </div>
+                                </div>
+                                <div class="mt-4 text-end">
+                                    <button type="submit" class="btn btn-primary fw-semibold"><i class="bi bi-check-lg me-1"></i> Save Student Record</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- TAB 2: Bulk Upload Students -->
+                        <div class="tab-pane fade" id="tabUploadStudent" role="tabpanel">
+                            <form id="uploadStudentForm" onsubmit="uploadBulkStudents(event)">
+                                <div class="p-3 bg-light border rounded mb-3">
+                                    <label class="form-label fw-semibold text-primary"><i class="bi bi-upload me-1"></i>Select Student Data File (JSON or CSV)</label>
+                                    <input type="file" id="bulkStudentFile" accept=".json,.csv,text/csv,application/json" class="form-control mb-2" required>
+                                    <small class="text-muted d-block">JSON format: <code>[{"rollNo":"101", "name":"Student Name", "classDiv":"10-A"}]</code></small>
+                                    <small class="text-muted d-block">CSV format headers: <code>rollNo,name,classDiv</code></small>
+                                </div>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-success fw-semibold"><i class="bi bi-cloud-upload me-1"></i> Upload Student File</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- TAB 3: Registered Students Directory List -->
+                        <div class="tab-pane fade" id="tabListStudent" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                                <div class="d-flex gap-2 flex-grow-1">
+                                    <input type="text" id="studentSearchInput" class="form-control form-control-sm" style="max-width: 220px;" placeholder="Search name or roll..." oninput="renderStudentDirectory()">
+                                    <select id="studentClassFilter" class="form-select form-select-sm" style="max-width: 180px;" onchange="renderStudentDirectory()">
+                                        <option value="all">🎓 All Classes</option>
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearAllStudents()"><i class="bi bi-trash me-1"></i> Clear Directory</button>
+                            </div>
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-sm table-bordered align-middle border">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Roll No</th>
+                                            <th>Student Name</th>
+                                            <th>Class / Div</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentDirectoryTbody">
+                                        <!-- Dynamically populated via admin.js -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Default Data Confirmation Modal with Password Protection -->
+    <div class="modal fade" id="resetDataModal" tabindex="-1" aria-labelledby="resetDataModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title fw-bold" id="resetDataModalLabel">
+                        <i class="bi bi-shield-lock-fill me-2"></i>Reset System Data - Auth Required
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form onsubmit="return executeResetDefaultData(event)">
+                    <div class="modal-body p-4 text-center">
+                        <div class="mb-3 text-danger fs-1">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-2">Restore Factory Initial Data?</h5>
+                        <p class="text-muted small mb-3">
+                            This action will reset all <strong>Books Inventory</strong>, <strong>Ledger Records</strong>, <strong>Categories</strong>, and <strong>Student Directory</strong> back to default datasets. Any custom modifications will be lost.
+                        </p>
+
+                        <div class="text-start bg-light p-3 rounded border mb-2">
+                            <label for="resetPasswordInput" class="form-label fw-bold text-dark small mb-1">
+                                <i class="bi bi-key-fill text-danger me-1"></i>Enter Admin Password:
+                            </label>
+                            <div class="input-group">
+                                <input type="password" id="resetPasswordInput" class="form-control" placeholder="Enter admin password..." required autocomplete="off">
+                                <button class="btn btn-outline-secondary" type="button" onclick="toggleResetPasswordVisibility()">
+                                    <i class="bi bi-eye" id="toggleResetPasswordIcon"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Password: <code>admin</code> or <code>admin123</code></small>
+                            <div id="resetPasswordError" class="alert alert-danger py-2 px-3 small mt-2 d-none mb-0">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i> Incorrect Admin Password! Please try again.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger fw-semibold">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Confirm & Reset Data
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Book Barcode View & Print Modal -->
+    <div class="modal fade" id="barcodeModal" tabindex="-1" aria-labelledby="barcodeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold" id="barcodeModalLabel">
+                        <i class="bi bi-upc-scan text-info me-2"></i>Book Barcode & Label Printer
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div id="barcodeModalContent">
+                        <!-- Dynamic Barcode SVG and Details rendered here -->
+                    </div>
+                </div>
+                <div class="modal-footer bg-light d-flex justify-content-between">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary fw-bold" id="barcodePrintBtn">
+                        <i class="bi bi-printer-fill me-1"></i> Print Barcode Label
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Data Export Modal -->
+    <div class="modal fade" id="customDataExportModal" tabindex="-1" aria-labelledby="customDataExportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content rounded-4 shadow-lg border-0">
+                <div class="modal-header bg-success text-white p-3">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="customDataExportModalLabel">
+                        <i class="bi bi-file-earmark-arrow-down fs-4"></i> Custom Library Data Export Engine
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    
+                    <!-- Data Scope Selection -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark"><i class="bi bi-database me-1 text-primary"></i> Data Scope to Export</label>
+                            <select id="customExportScope" class="form-select fw-semibold">
+                                <option value="all_books">📚 All Library Books (Full Catalog)</option>
+                                <option value="instock">✅ In Stock Books Only (Available in Library)</option>
+                                <option value="out_of_stock">⚠️ Out of Stock Books Only (Currently Issued)</option>
+                                <option value="overdue_fines">💰 Overdue Books & Fine Details (Fines Due)</option>
+                                <option value="full_ledger">📋 Full Circulation Ledger Transactions</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark"><i class="bi bi-filetype-pdf me-1 text-danger"></i> Export File Format</label>
+                            <select id="customExportFormat" class="form-select fw-semibold">
+                                <option value="csv">📊 Excel CSV File (.csv)</option>
+                                <option value="pdf">📄 Printable PDF Document / Report (.pdf)</option>
+                                <option value="json">📋 JSON Raw Data File (.json)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Select Fields to Include in Export -->
+                    <div class="card border rounded-4 shadow-sm mb-4">
+                        <div class="card-header bg-white fw-bold d-flex align-items-center justify-content-between py-2.5">
+                            <span><i class="bi bi-check2-square text-success me-1"></i> Select Fields / Columns to Include</span>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary py-0 px-2" onclick="toggleAllExportFields(true)" style="font-size: 0.78rem;">Select All</button>
+                                <button type="button" class="btn btn-outline-secondary py-0 px-2" onclick="toggleAllExportFields(false)" style="font-size: 0.78rem;">Deselect All</button>
+                            </div>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row g-3">
+                                <div class="col-md-4 col-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input custom-export-field" type="checkbox" id="chkBookName" value="title" checked>
+                                        <label class="form-check-label fw-semibold" for="chkBookName"><i class="bi bi-book me-1 text-primary"></i> Book Name (Title)</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input custom-export-field" type="checkbox" id="chkAuthorName" value="author" checked>
+                                        <label class="form-check-label fw-semibold" for="chkAuthorName"><i class="bi bi-person me-1 text-info"></i> Author Name</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input custom-export-field" type="checkbox" id="chkBarcode" value="barcode" checked>
+                                        <label class="form-check-label fw-semibold" for="chkBarcode"><i class="bi bi-upc-scan me-1 text-dark"></i> Barcode / Book ID</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input custom-export-field" type="checkbox" id="chkInStock" value="instock" checked>
+                                        <label class="form-check-label fw-semibold" for="chkInStock"><i class="bi bi-box-seam me-1 text-success"></i> In Stock Status</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input custom-export-field" type="checkbox" id="chkOutOfStock" value="outofstock" checked>
+                                        <label class="form-check-label fw-semibold" for="chkOutOfStock"><i class="bi bi-exclamation-square me-1 text-warning"></i> Out of Stock Details</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input custom-export-field" type="checkbox" id="chkFineDetails" value="fine" checked>
+                                        <label class="form-check-label fw-semibold" for="chkFineDetails"><i class="bi bi-currency-rupee me-1 text-danger"></i> Fine Details (Overdue ₹)</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input custom-export-field" type="checkbox" id="chkSection" value="section" checked>
+                                        <label class="form-check-label fw-semibold" for="chkSection"><i class="bi bi-tag me-1 text-secondary"></i> Category / Section</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input custom-export-field" type="checkbox" id="chkBorrower" value="borrower" checked>
+                                        <label class="form-check-label fw-semibold" for="chkBorrower"><i class="bi bi-person-badge me-1 text-primary"></i> Borrower Student / Staff</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input custom-export-field" type="checkbox" id="chkIssueDate" value="issueDate" checked>
+                                        <label class="form-check-label fw-semibold" for="chkIssueDate"><i class="bi bi-calendar-event me-1 text-info"></i> Issue & Due Dates</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Secondary Filters -->
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-muted">Filter by Class / Division</label>
+                            <select id="customExportClassFilter" class="form-select form-select-sm">
+                                <option value="all">🎓 All Classes & Divisions</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-muted">Filter by Category / Section</label>
+                            <select id="customExportCategoryFilter" class="form-select form-select-sm">
+                                <option value="all">All Category Sections</option>
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer bg-light p-3">
+                    <button type="button" class="btn btn-secondary fw-bold px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success fw-bold px-4 shadow-sm" onclick="generateCustomExportData()">
+                        <i class="bi bi-file-earmark-arrow-down me-1"></i> Export Custom Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Custom Classes & Divisions Modal -->
+    <div class="modal fade" id="manageClassesModal" tabindex="-1" aria-labelledby="manageClassesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 shadow-lg border-0">
+                <div class="modal-header bg-info text-white p-3">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="manageClassesModalLabel">
+                        <i class="bi bi-mortarboard-fill fs-4"></i> Manage Custom Classes & Divisions
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    
+                    <!-- Add Custom Class Form -->
+                    <form onsubmit="handleAddCustomClassForm(event)" class="mb-4">
+                        <label class="form-label fw-bold text-dark"><i class="bi bi-plus-circle me-1 text-primary"></i> Add New Class / Division</label>
+                        <div class="input-group">
+                            <input type="text" id="newCustomClassNameInput" class="form-control" placeholder="e.g. Class 1, 1st Year BA, Science Dept..." required>
+                            <button type="submit" class="btn btn-primary fw-bold">
+                                <i class="bi bi-plus-lg me-1"></i> Add Class
+                            </button>
+                        </div>
+                        <small class="text-muted">Type any class, division, department, or batch name.</small>
+                    </form>
+
+                    <!-- Active Custom Classes List -->
+                    <div class="card border rounded-4 shadow-sm">
+                        <div class="card-header bg-white fw-bold py-2.5 d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-list-ul me-1 text-info"></i> Registered Custom Classes</span>
+                            <span id="customClassesCountBadge" class="badge bg-info text-dark rounded-pill">0 Classes</span>
+                        </div>
+                        <div class="card-body p-3">
+                            <div id="customClassesListContainer" class="d-flex flex-wrap gap-2" style="max-height: 250px; overflow-y: auto;">
+                                <!-- Dynamically populated by renderManageClassesModal() -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer bg-light p-3">
+                    <button type="button" class="btn btn-secondary fw-bold px-4" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="adminToastContainer"></div>
+
+</body>
+
+</html>
