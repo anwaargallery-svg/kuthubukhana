@@ -68,7 +68,7 @@ const defaultCategories = {};
 const defaultStudents = [];
 
 // Backend REST API Sync Layer
-const API_BASE_URL = (window.location.origin && window.location.origin.includes(':5000')) 
+const API_BASE_URL = (window.location.protocol && window.location.protocol.startsWith('http')) 
     ? window.location.origin 
     : 'http://localhost:5000';
 
@@ -1296,6 +1296,17 @@ function renderLedgerTable() {
 // Auto-initialize ledger table and student lookup on load
 document.addEventListener('DOMContentLoaded', () => {
     syncWithBackendData();
+
+    // Auto-sync backend data live every 5 seconds across all open devices
+    setInterval(() => {
+        syncWithBackendData();
+    }, 5000);
+
+    // Sync immediately when user switches back to this browser tab
+    window.addEventListener('focus', () => {
+        syncWithBackendData();
+    });
+
     populateClassFilterDropdowns();
     if (document.getElementById('ledgerTableBody')) {
         renderLedgerTable();

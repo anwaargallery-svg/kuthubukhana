@@ -50,7 +50,7 @@ function saveAdminCategories(categories) {
         if (typeof cachedBackendData !== 'undefined' && cachedBackendData) {
             cachedBackendData.categories = categories;
         }
-        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.origin && window.location.origin.includes(':5000')) ? window.location.origin : 'http://localhost:5000');
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
         fetch(`${baseUrl}/api/categories`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -365,7 +365,7 @@ async function deleteAdminCategory(code) {
     delete categories[code];
     saveAdminCategories(categories);
 
-    const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.origin && window.location.origin.includes(':5000')) ? window.location.origin : 'http://localhost:5000');
+    const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
     fetch(`${baseUrl}/api/categories/${encodeURIComponent(code)}`, {
         method: 'DELETE'
     }).catch(err => console.warn('Backend category delete endpoint warning:', err));
@@ -1209,7 +1209,7 @@ function fetchAdminStudents() {
 
 function saveAdminStudents(students) {
     localStorage.setItem('libraryStudents', JSON.stringify(students));
-    const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.origin && window.location.origin.includes(':5000')) ? window.location.origin : 'http://localhost:5000');
+    const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
     fetch(`${baseUrl}/api/students`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
