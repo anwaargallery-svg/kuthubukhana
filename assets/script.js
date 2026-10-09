@@ -1080,15 +1080,15 @@ function playBarcodeScanSound() {
 let lastScannedBarcode = '';
 let lastScannedTime = 0;
 
-// Universal Instant Barcode Scan Processor
-function processInstantBarcodeScan(scannedCode, source = 'USB Barcode Reader') {
+// Universal Instant Barcode / QR Scan Processor
+function processInstantBarcodeScan(scannedCode, source = 'USB QR Reader') {
     if (!scannedCode) return;
     const cleanCode = String(scannedCode).trim();
     if (!cleanCode) return;
 
-    // Prevent duplicate rapid spam within 1.2s for identical barcode
+    // Hyper-fast 400ms cooldown for identical QR code
     const now = Date.now();
-    if (cleanCode === lastScannedBarcode && (now - lastScannedTime) < 1200) {
+    if (cleanCode === lastScannedBarcode && (now - lastScannedTime) < 400) {
         return;
     }
     lastScannedBarcode = cleanCode;
@@ -1103,7 +1103,7 @@ function processInstantBarcodeScan(scannedCode, source = 'USB Barcode Reader') {
         inlineReader.classList.add('scan-flash-active');
         setTimeout(() => {
             inlineReader.classList.remove('scan-flash-active');
-        }, 450);
+        }, 350);
     }
 
     // 3. Document / Book Lookup in Data Store
@@ -1181,17 +1181,17 @@ function showInstantBarcodeToast(code, title, author, status, source) {
         <div class="instant-barcode-toast">
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <span class="badge bg-primary text-white font-monospace">
-                    <i class="bi bi-upc-scan me-1"></i> ${source}
+                    <i class="bi bi-qr-code-scan me-1"></i> ${source}
                 </span>
                 <span class="badge ${statusBadgeClass}">${statusText}</span>
             </div>
             <div class="d-flex align-items-start gap-2">
                 <div class="bg-primary text-white p-2 rounded-3 fs-4 d-flex align-items-center justify-content-center" style="width:40px; height:40px; min-width:40px;">
-                    <i class="bi bi-barcode"></i>
+                    <i class="bi bi-qr-code"></i>
                 </div>
                 <div class="flex-grow-1 overflow-hidden">
                     <div class="fw-bold text-dark text-truncate fs-6">${title}</div>
-                    <div class="small text-muted text-truncate"><i class="bi bi-person me-1"></i>${author} | Barcode #${code}</div>
+                    <div class="small text-muted text-truncate"><i class="bi bi-person me-1"></i>${author} | Accession #${code}</div>
                 </div>
             </div>
             <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
@@ -1253,25 +1253,45 @@ function startInlineScanner() {
         try {
             if (typeof Html5Qrcode !== 'undefined') {
                 if (!inlineQrCode) {
-                    inlineQrCode = new Html5Qrcode("inlineReader");
+                    inlineQrCode = new Html5Qrcode("inlineReader", {
+                        verbose: false,
+                        experimentalFeatures: {
+                            useBarCodeDetectorIfSupported: true
+                        }
+                    });
                 }
+
+                // Square 1:1 ratio qrbox for fast 2D QR Code detection
+                const qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
+                    const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                    const boxSize = Math.floor(minEdge * 0.80);
+                    return { width: Math.max(boxSize, 200), height: Math.max(boxSize, 200) };
+                };
+
                 inlineQrCode.start(
                     { facingMode: "environment" },
-                    { fps: 15, qrbox: { width: 260, height: 160 } },
+                    { 
+                        fps: 30, 
+                        qrbox: qrboxFunction,
+                        aspectRatio: 1.0,
+                        videoConstraints: {
+                            focusMode: "continuous"
+                        }
+                    },
                     (decodedText) => {
-                        processInstantBarcodeScan(decodedText, 'Camera Scanner');
+                        processInstantBarcodeScan(decodedText, 'Camera QR Scanner');
                     },
                     () => {}
                 ).catch(err => {
                     const errDiv = document.getElementById('inlineScannerError');
                     if (errDiv) {
                         errDiv.style.display = 'block';
-                        errDiv.innerHTML = "<i class='bi bi-info-circle me-1'></i> <strong>Camera scanner notice:</strong> Webcam inactive or permission pending. Hardware USB Barcode Readers scan automatically!";
+                        errDiv.innerHTML = "<i class='bi bi-info-circle me-1'></i> <strong>Camera scanner notice:</strong> Webcam inactive or permission pending. Hardware USB Barcode/QR Readers scan automatically!";
                     }
                 });
             }
         } catch (e) {}
-    }, 300);
+    }, 200);
 }
 
 function stopInlineScanner() {
