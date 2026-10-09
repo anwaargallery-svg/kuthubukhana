@@ -6,11 +6,11 @@
       "section": "H",
       "sectionName": "HADHEES",
       "cover": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4bd2JEXB-aRzdUSPX1J9reK-gGHFLwtruTpRBktFeJ_UCT68GTmENBJhU&s=10",
-      "status": "Issued",
-      "issuedTo": "SUHAIL (Roll #2)",
-      "issueDate": "2026-10-07",
-      "dueDate": "2026-10-18",
-      "allowedDays": 10
+      "status": "Available",
+      "issuedTo": null,
+      "issueDate": null,
+      "dueDate": null,
+      "allowedDays": 5
     },
     "H-002": {
       "title": "swaheeh muslim",
@@ -23,56 +23,7 @@
       "issueDate": null
     }
   },
-  "ledger": [
-    {
-      "id": 1791368430477,
-      "rollNo": "2",
-      "studentName": "SUHAIL",
-      "classDiv": "9",
-      "bookId": "H-001",
-      "bookTitle": "صحيح البخاري",
-      "author": "imam bukhari",
-      "issueDate": "2026-10-07",
-      "dueDate": "2026-10-18",
-      "allowedDays": 10,
-      "returnDate": null,
-      "status": "Issued",
-      "fineAmount": 0,
-      "finePaid": false
-    },
-    {
-      "id": 1791368409132,
-      "rollNo": "3",
-      "studentName": "YASEEN",
-      "classDiv": "9",
-      "bookId": "H-001",
-      "bookTitle": "صحيح البخاري",
-      "author": "imam bukhari",
-      "issueDate": "2026-10-07",
-      "dueDate": "2026-10-18",
-      "allowedDays": 10,
-      "returnDate": "2026-10-07",
-      "status": "Returned",
-      "fineAmount": 0,
-      "finePaid": false
-    },
-    {
-      "id": 1791368386245,
-      "rollNo": "1",
-      "studentName": "rishin",
-      "classDiv": "9",
-      "bookId": "H-001",
-      "bookTitle": "صحيح البخاري",
-      "author": "imam bukhari",
-      "issueDate": "2026-10-07",
-      "dueDate": "2026-10-18",
-      "allowedDays": 10,
-      "returnDate": "2026-10-07",
-      "status": "Returned",
-      "fineAmount": 0,
-      "finePaid": false
-    }
-  ],
+  "ledger": [],
   "categories": {
     "H": "HADHEES",
     "PS": "PSYCOLOGY",
@@ -96,6 +47,38 @@
     "LR": "LITRATUR",
     "BH": "BIOGRAPHY"
   },
-  "students": [],
+  "students": [
+    {
+      "rollNo": "13",
+      "name": "jasir",
+      "classDiv": "10"
+    },
+    {
+      "rollNo": "20260025",
+      "EnrollNo": "20260025",
+      "applicationId": "ADM-3142",
+      "name": "MOHAMMED SHAMEEM K T",
+      "Name": "MOHAMMED SHAMEEM K T",
+      "classDiv": "Shareeath (1st Year)",
+      "Course": "Shareeath",
+      "CurrentYear": 1,
+      "Status": "Active",
+      "Password": "6238296010",
+      "houseName": "KALLITHODI",
+      "FatherName": "KUNHIMOHAMMED",
+      "fatherOccupation": "BUISINESS",
+      "motherName": "SHAHARBAN",
+      "Contact": "6238296010",
+      "Email": "shameemktfas@gmail.com",
+      "DOB": "2004-06-25",
+      "aadhar": "947035291541",
+      "Address": "KALLITHODI HOUSE THRIKKADERI ATTASSERI KOTTAPPURAM",
+      "madrasa5Name": "TANVEERUL ISLAM MADRASA",
+      "madrasa7Name": "TANVEERUL ISLAM MADRASA",
+      "schoolName": "NVAUPS PANAMANNA SOUTH",
+      "darsName": "",
+      "learnedKithabs": ""
+    }
+  ],
   "isLibraryClosed": false
 }

@@ -67,7 +67,10 @@
                         </h1>
                         <p class="text-muted mb-0 small">Scan barcodes or type accession IDs to issue books to students and staff</p>
                     </div>
-                    <div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <button type="button" class="btn btn-outline-primary btn-sm fw-bold px-3 py-2 shadow-sm rounded-3" onclick="printLastTransactionSlip()">
+                            <i class="bi bi-printer-fill me-1"></i> Print Last Slip
+                        </button>
                         <div class="mode-switcher-container shadow-sm">
                             <input type="radio" class="btn-check" name="entryMode" id="modeManual" value="manual" checked onchange="switchEntryMode('manual')">
                             <label class="btn" for="modeManual"><i class="bi bi-keyboard me-1"></i> Manual</label>

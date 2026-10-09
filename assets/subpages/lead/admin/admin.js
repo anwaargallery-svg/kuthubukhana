@@ -384,9 +384,9 @@ function updateLiveBookBarcodePreview() {
         const val = idInput.value.trim();
         if (val && typeof renderBookBarcode === 'function') {
             previewDiv.innerHTML = `
-                <small class="text-muted d-block mb-1 font-monospace fw-semibold"><i class="bi bi-upc-scan me-1"></i>Auto-Generated Barcode Preview:</small>
-                <div class="book-barcode-container shadow-sm p-2 bg-white rounded border">
-                    ${renderBookBarcode(val, { height: 32, fontSize: 9 })}
+                <small class="text-muted d-block mb-1 font-monospace fw-semibold"><i class="bi bi-qr-code me-1"></i>Auto-Generated QR Code Preview:</small>
+                <div class="book-barcode-container shadow-sm p-2 bg-white rounded border d-inline-block">
+                    ${renderBookBarcode(val, { height: 60, fontSize: 9 })}
                 </div>
             `;
         } else {
@@ -1266,16 +1266,23 @@ function uploadBulkStudents(e) {
                 const parsed = JSON.parse(content);
                 const list = Array.isArray(parsed) ? parsed : Object.values(parsed);
                 list.forEach(st => {
-                    if (st.rollNo || st.roll) {
-                        const roll = String(st.rollNo || st.roll).trim();
-                        const sName = st.name || st.studentName || 'Student';
-                        const sClass = st.classDiv || st.class || '10-A';
+                    const roll = String(st.rollNo || st.EnrollNo || st.roll || st.applicationId || '').trim();
+                    if (roll) {
+                        const sName = st.name || st.Name || st.studentName || 'Student';
+                        const sClass = st.classDiv || st.class || (st.Course ? `${st.Course}${st.CurrentYear ? ' (' + st.CurrentYear + 'Yr)' : ''}` : 'Shareeath');
                         
-                        const idx = students.findIndex(s => String(s.rollNo) === String(roll));
+                        const itemObj = { 
+                            rollNo: roll, 
+                            name: sName, 
+                            classDiv: sClass,
+                            ...st 
+                        };
+
+                        const idx = students.findIndex(s => String(s.rollNo || s.EnrollNo) === String(roll));
                         if (idx >= 0) {
-                            students[idx] = { rollNo: roll, name: sName, classDiv: sClass };
+                            students[idx] = { ...students[idx], ...itemObj };
                         } else {
-                            students.push({ rollNo: roll, name: sName, classDiv: sClass });
+                            students.push(itemObj);
                         }
                         addedCount++;
                     }

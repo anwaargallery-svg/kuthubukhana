@@ -824,7 +824,7 @@ async function processIssueBook(e) {
     saveBooksData(books);
 
     // Record in Ledger
-    ledger.unshift({
+    const newRecord = {
         id: Date.now(),
         rollNo: rollNo,
         studentName: studentName,
@@ -839,13 +839,24 @@ async function processIssueBook(e) {
         status: "Issued",
         fineAmount: 0,
         finePaid: false
-    });
+    };
+    ledger.unshift(newRecord);
     saveLedgerData(ledger);
 
-    showPopupAlert('✅ BOOK ISSUED SUCCESSFULLY!', `Book: "${bookTitle}"\nIssued To: ${studentName} (Roll #${rollNo}, Class ${classDiv || 'N/A'})\nIssue Date: ${todayStr}\nDue Date: ${dueDateStr} (${allowedWorkingWeeks} Working Week(s) / ${allowedWorkingDays} Working Days allowed)\n\nBorrowing Limit: ${activeIssuedForStudent.length + 1} of ${maxAllowedBooks} book(s) used.`, 'success');
-    
     // Refresh preview card
     handleBookInput(bookId);
+
+    const wantPrint = await showPopupConfirm(
+        '✅ BOOK ISSUED SUCCESSFULLY!',
+        `Book: "${bookTitle}"\nIssued To: ${studentName} (Roll #${rollNo}, Class ${classDiv || 'N/A'})\nIssue Date: ${todayStr}\nDue Date: ${dueDateStr} (${allowedWorkingWeeks} Working Week(s) / ${allowedWorkingDays} Working Days allowed)\n\nBorrowing Limit: ${activeIssuedForStudent.length + 1} of ${maxAllowedBooks} book(s) used.\n\nWould you like to print the Issue Slip now?`,
+        'success',
+        '🖨️ Print Issue Slip',
+        'Close'
+    );
+
+    if (wantPrint) {
+        openPrintSlipModal(newRecord);
+    }
     return true;
 }
 
@@ -903,7 +914,7 @@ async function processStaffUseBook(e) {
 
     // Record in Ledger
     const ledger = getLedgerData();
-    ledger.unshift({
+    const staffRecord = {
         id: Date.now(),
         rollNo: "STAFF",
         studentName: `Staff: ${staffName}`,
@@ -916,10 +927,9 @@ async function processStaffUseBook(e) {
         allowedDays: 999999,
         returnDate: null,
         status: "Issued (Staff Use)"
-    });
+    };
+    ledger.unshift(staffRecord);
     saveLedgerData(ledger);
-
-    showPopupAlert('✅ STAFF CHECKOUT SUCCESSFUL!', `Staff Member: ${staffName}\nDepartment: ${staffDept}\nBook Title: "${book.title}"\nDate: ${todayStr}\n\n✨ Staff Borrowing Policy:\n• Unlimited Books Allowed (No Quantity Limit)\n• Unlimited Duration (No Due Date / No Fines)\n\nInventory Status is now: OUT OF STOCK (Issued to Staff).`, 'success');
 
     // Reset Form & Hide Modal
     document.getElementById('staffUseForm')?.reset();
@@ -934,6 +944,18 @@ async function processStaffUseBook(e) {
     if (bookIdInput) {
         bookIdInput.value = bookId;
         handleBookInput(bookId);
+    }
+
+    const wantPrint = await showPopupConfirm(
+        '✅ STAFF CHECKOUT SUCCESSFUL!',
+        `Staff Member: ${staffName}\nDepartment: ${staffDept}\nBook Title: "${book.title}"\nDate: ${todayStr}\n\nInventory Status is now: OUT OF STOCK (Issued to Staff).\n\nWould you like to print the Staff Issue Slip now?`,
+        'success',
+        '🖨️ Print Staff Slip',
+        'Close'
+    );
+
+    if (wantPrint) {
+        openPrintSlipModal(staffRecord);
     }
 
     return true;
@@ -998,10 +1020,202 @@ async function processReturnBook() {
         saveLedgerData(ledger);
     }
 
-    showPopupAlert('✅ BOOK RETURNED SUCCESSFULLY!', `Book: "${book.title}"\nReturned By: ${previousBorrower}\nReturn Date: ${todayStr}${fineMsg}\n\nInventory Status is now: IN STOCK (Available for re-issue).`, 'success');
+    const returnRecord = record || {
+        id: Date.now(),
+        rollNo: 'N/A',
+        studentName: previousBorrower,
+        classDiv: 'N/A',
+        bookId: bookId,
+        bookTitle: book.title,
+        author: book.author || 'General',
+        issueDate: issueDateStr,
+        dueDate: book.dueDate,
+        returnDate: todayStr,
+        status: "Returned",
+        fineAmount: fineInfo.fineAmount,
+        finePaid: fineCollected
+    };
 
     // Refresh preview card
     handleBookInput(bookId);
+
+    const wantPrint = await showPopupConfirm(
+        '✅ BOOK RETURNED SUCCESSFULLY!',
+        `Book: "${book.title}"\nReturned By: ${previousBorrower}\nReturn Date: ${todayStr}${fineMsg}\n\nInventory Status is now: IN STOCK (Available for re-issue).\n\nWould you like to print the Return Receipt Slip now?`,
+        'success',
+        '🖨️ Print Return Slip',
+        'Close'
+    );
+
+    if (wantPrint) {
+        openPrintSlipModal(returnRecord);
+    }
+}
+
+// ==========================================
+// INSTANT BARCODE & DOCUMENT (AAVANAM) AUTO-SCAN SYSTEM
+// ==========================================
+
+// Audio Sound Cue for Barcode Scan
+function playBarcodeScanSound() {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1300, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1800, audioCtx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+    } catch(e){}
+}
+
+let lastScannedBarcode = '';
+let lastScannedTime = 0;
+
+// Universal Instant Barcode Scan Processor
+function processInstantBarcodeScan(scannedCode, source = 'USB Barcode Reader') {
+    if (!scannedCode) return;
+    const cleanCode = String(scannedCode).trim();
+    if (!cleanCode) return;
+
+    // Prevent duplicate rapid spam within 1.2s for identical barcode
+    const now = Date.now();
+    if (cleanCode === lastScannedBarcode && (now - lastScannedTime) < 1200) {
+        return;
+    }
+    lastScannedBarcode = cleanCode;
+    lastScannedTime = now;
+
+    // 1. Play Instant Scan Audio Beep
+    playBarcodeScanSound();
+
+    // 2. Flash Webcam Scanner Frame if active
+    const inlineReader = document.getElementById('inlineReader');
+    if (inlineReader) {
+        inlineReader.classList.add('scan-flash-active');
+        setTimeout(() => {
+            inlineReader.classList.remove('scan-flash-active');
+        }, 450);
+    }
+
+    // 3. Document / Book Lookup in Data Store
+    const books = getBooksData();
+    const book = books[cleanCode];
+    const bookTitle = book ? book.title : `Book / Document #${cleanCode}`;
+    const bookAuthor = book ? (book.author || 'Catalog Document') : 'Accession Record';
+    const bookStatus = book ? (book.status || 'Available') : 'Available';
+
+    // 4. Render Floating Instant Scan Toast Banner
+    showInstantBarcodeToast(cleanCode, bookTitle, bookAuthor, bookStatus, source);
+
+    // 5. Auto-Fill Open Library Circulation Station
+    const bookIdInput = document.getElementById('bookIdInput');
+    if (bookIdInput) {
+        bookIdInput.value = cleanCode;
+        handleBookInput(cleanCode);
+
+        // Auto-scroll to preview book card
+        const previewCard = document.getElementById('bookCoverCard');
+        if (previewCard && previewCard.style.display !== 'none') {
+            previewCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    // 6. Auto-Fill Return Modal Input if active
+    const returnInput = document.getElementById('returnBookIdInput') || document.getElementById('returnAccessionInput');
+    if (returnInput) {
+        returnInput.value = cleanCode;
+        if (typeof handleReturnBookLookup === 'function') {
+            handleReturnBookLookup(cleanCode);
+        }
+    }
+
+    // 7. Auto-Fill Book Search Modal Input if active
+    const searchModalInput = document.getElementById('bookCatalogSearchInput');
+    if (searchModalInput) {
+        searchModalInput.value = cleanCode;
+        if (typeof performCatalogSearch === 'function') {
+            performCatalogSearch(cleanCode);
+        }
+    }
+
+    // 8. Auto-Fill Admin Barcode Preview Field if active
+    const adminBarcodeField = document.getElementById('newBookId') || document.getElementById('adminBookSearch');
+    if (adminBarcodeField) {
+        adminBarcodeField.value = cleanCode;
+        if (typeof updateLiveBookBarcodePreview === 'function') {
+            updateLiveBookBarcodePreview();
+        }
+    }
+}
+
+// Render Instant Scanned Toast Notification
+function showInstantBarcodeToast(code, title, author, status, source) {
+    let container = document.getElementById('instantBarcodeToastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'instantBarcodeToastContainer';
+        container.className = 'instant-barcode-toast-container';
+        document.body.appendChild(container);
+    }
+
+    let statusBadgeClass = 'bg-success';
+    let statusText = 'Available (In Stock)';
+    if (status === 'Admin Hold') {
+        statusBadgeClass = 'bg-danger';
+        statusText = '⛔ Admin Hold';
+    } else if (status === 'Issued') {
+        statusBadgeClass = 'bg-warning text-dark';
+        statusText = '⚠️ Issued';
+    }
+
+    const toastHtml = `
+        <div class="instant-barcode-toast">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="badge bg-primary text-white font-monospace">
+                    <i class="bi bi-upc-scan me-1"></i> ${source}
+                </span>
+                <span class="badge ${statusBadgeClass}">${statusText}</span>
+            </div>
+            <div class="d-flex align-items-start gap-2">
+                <div class="bg-primary text-white p-2 rounded-3 fs-4 d-flex align-items-center justify-content-center" style="width:40px; height:40px; min-width:40px;">
+                    <i class="bi bi-barcode"></i>
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="fw-bold text-dark text-truncate fs-6">${title}</div>
+                    <div class="small text-muted text-truncate"><i class="bi bi-person me-1"></i>${author} | Barcode #${code}</div>
+                </div>
+            </div>
+            <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+                <small class="text-success fw-bold d-flex align-items-center gap-1">
+                    <i class="bi bi-check-circle-fill"></i> Instant Scan Synced
+                </small>
+                <button type="button" class="btn-close btn-sm" onclick="this.closest('.instant-barcode-toast').remove()"></button>
+            </div>
+        </div>
+    `;
+
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = toastHtml;
+    const toastEl = wrapper.firstElementChild;
+    container.appendChild(toastEl);
+
+    setTimeout(() => {
+        if (toastEl && toastEl.parentNode) {
+            toastEl.style.opacity = '0';
+            toastEl.style.transform = 'translateY(-10px)';
+            toastEl.style.transition = 'all 0.3s ease';
+            setTimeout(() => toastEl.remove(), 300);
+        }
+    }, 4500);
 }
 
 // Entry Mode Switcher (Manual vs Barcode)
@@ -1014,7 +1228,7 @@ function switchEntryMode(mode) {
         if (manualSec) manualSec.style.display = 'none';
         if (barcodeSec) barcodeSec.style.display = 'block';
         if (modeBadge) {
-            modeBadge.className = 'badge bg-primary fs-6';
+            modeBadge.className = 'badge bg-primary fs-6 scan-pulse-badge';
             modeBadge.innerHTML = '<i class="bi bi-qr-code-scan me-1"></i> Mode: Barcode Scanner Active';
         }
         startInlineScanner();
@@ -1043,20 +1257,16 @@ function startInlineScanner() {
                 }
                 inlineQrCode.start(
                     { facingMode: "environment" },
-                    { fps: 10, qrbox: { width: 250, height: 150 } },
+                    { fps: 15, qrbox: { width: 260, height: 160 } },
                     (decodedText) => {
-                        const bookIdInput = document.getElementById('bookIdInput');
-                        if (bookIdInput) {
-                            bookIdInput.value = decodedText;
-                            handleBookInput(decodedText);
-                        }
+                        processInstantBarcodeScan(decodedText, 'Camera Scanner');
                     },
                     () => {}
                 ).catch(err => {
                     const errDiv = document.getElementById('inlineScannerError');
                     if (errDiv) {
                         errDiv.style.display = 'block';
-                        errDiv.innerText = "Camera notice: Camera not active or permission denied. Hardware USB Barcode Readers work automatically!";
+                        errDiv.innerHTML = "<i class='bi bi-info-circle me-1'></i> <strong>Camera scanner notice:</strong> Webcam inactive or permission pending. Hardware USB Barcode Readers scan automatically!";
                     }
                 });
             }
@@ -1071,14 +1281,10 @@ function stopInlineScanner() {
 }
 
 function simulateScan(code) {
-    const bookIdInput = document.getElementById('bookIdInput');
-    if (bookIdInput) {
-        bookIdInput.value = code;
-        handleBookInput(code);
-    }
+    processInstantBarcodeScan(code, 'Simulated Scan');
 }
 
-// Hardware USB / Bluetooth Barcode Device Listener
+// Hardware USB / Bluetooth Barcode Scanner Keystroke Listener
 let barcodeBuffer = '';
 let barcodeTimeout = null;
 
@@ -1088,31 +1294,32 @@ document.addEventListener('keydown', (e) => {
 
     if (isSpecialInput) return;
 
+    // F2 Shortcut for Instant Barcode Scan Trigger
+    if (e.key === 'F2') {
+        e.preventDefault();
+        const modeBarcodeRadio = document.getElementById('modeBarcode');
+        if (modeBarcodeRadio) {
+            modeBarcodeRadio.checked = true;
+            switchEntryMode('barcode');
+        }
+        return;
+    }
+
     if (e.key === 'Enter') {
-        if (barcodeBuffer.length >= 2) {
+        if (barcodeBuffer.length >= 1) {
             const scannedCode = barcodeBuffer.trim();
-            const bookIdInput = document.getElementById('bookIdInput');
-            if (bookIdInput) {
-                bookIdInput.value = scannedCode;
-                handleBookInput(scannedCode);
-                
-                const scannerNotice = document.getElementById('hardwareScannerNotice');
-                if (scannerNotice) {
-                    scannerNotice.style.display = 'block';
-                    scannerNotice.innerHTML = `<i class="bi bi-upc-scan me-1"></i> <strong>USB Barcode Device Detected:</strong> Scanned Code #${scannedCode}`;
-                    setTimeout(() => { scannerNotice.style.display = 'none'; }, 4000);
-                }
-            }
             barcodeBuffer = '';
+            processInstantBarcodeScan(scannedCode, 'USB Barcode Reader');
         }
     } else if (e.key.length === 1) {
         barcodeBuffer += e.key;
         clearTimeout(barcodeTimeout);
         barcodeTimeout = setTimeout(() => {
             barcodeBuffer = '';
-        }, 200);
+        }, 250);
     }
 });
+
 
 // Populate class filter dropdowns dynamically
 function populateClassFilterDropdowns() {
@@ -1252,7 +1459,7 @@ function renderLedgerTable() {
     });
 
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No ledger records found matching selected class or filter.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-muted"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No ledger records found matching selected class or filter.</td></tr>`;
         return;
     }
 
@@ -1288,9 +1495,242 @@ function renderLedgerTable() {
                 <td>${item.issueDate}</td>
                 <td><small class="fw-bold text-secondary">${dueDateDisplay}</small></td>
                 <td>${statusBadgeHtml}</td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-outline-primary fw-bold py-1 px-2.5 shadow-sm" onclick="printLedgerSlip('${item.id}')" title="Print Issue / Return Slip Receipt">
+                        <i class="bi bi-printer-fill me-1"></i> Slip
+                    </button>
+                </td>
             </tr>
         `;
     }).join('');
+}
+
+// ==========================================
+// PRINT SLIP TRANSACTION RECEIPT ENGINE
+// ==========================================
+
+function renderPrintSlipHTML(item) {
+    if (!item) return '';
+
+    const isStaffUse = item.rollNo === 'STAFF' || (item.status && item.status.includes('Staff'));
+    const isReturned = item.status === 'Returned';
+    const booksObj = getBooksData();
+    const categoriesObj = getCategoriesData();
+    const bookInfo = booksObj[item.bookId] || {};
+    
+    const author = item.author || bookInfo.author || 'Unknown Author';
+    const section = item.section || bookInfo.sectionName || categoriesObj[bookInfo.section] || bookInfo.section || 'General Section';
+    const logoUrl = getCollegeLogoUrl();
+    const printDateStr = new Date().toLocaleString('en-IN', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: true
+    }).toUpperCase();
+
+    const pnrNo = `PNR-${String(item.id || Date.now()).slice(-8)}`;
+    const ticketClass = isStaffUse ? 'FACULTY PASS' : 'STUDENT CLASS';
+    const txnType = isReturned ? 'RETURN CLEARANCE' : 'BOOK ISSUE PASS';
+
+    const fineText = (isReturned && item.fineAmount > 0) 
+        ? `RS. ${item.fineAmount}.00 (PAID)`
+        : ((!isReturned && !isStaffUse && item.issueDate) 
+            ? `RS. 5.00 / DAY OVERDUE` 
+            : `RS. 0.00 [CLEAR]`);
+
+    const qrCodeSvg = (typeof renderBookBarcode === 'function') 
+        ? renderBookBarcode(item.bookId || '000', { height: 72, fontSize: 8 }) 
+        : `<div class="font-monospace fw-bold">${item.bookId}</div>`;
+
+    return `
+        <div class="train-ticket-wrapper">
+            <div class="train-ticket-card">
+                
+                <!-- Ticket Top Banner Header -->
+                <div class="ticket-header-ribbon">
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="${logoUrl}" alt="Logo" class="ticket-logo-img" onerror="this.onerror=null;this.style.display='none'">
+                        <div>
+                            <div class="ticket-title-main">KUTHBUKHANA ANWARIYYA TRANSIT PASS</div>
+                            <div class="ticket-sub-title">DEPARTMENT OF LIBRARY CIRCULATION SERVICES</div>
+                        </div>
+                    </div>
+                    <div class="ticket-pnr-box text-end">
+                        <div class="ticket-pnr-label">TICKET PNR / NO:</div>
+                        <div class="ticket-pnr-val">${pnrNo}</div>
+                    </div>
+                </div>
+
+                <!-- Main Ticket Body (Split Layout: Journey Data + QR Verification Stub) -->
+                <div class="ticket-body-grid">
+                    
+                    <!-- Left Section: Transit & Passenger Particulars -->
+                    <div class="ticket-main-section">
+                        
+                        <!-- Row 1: Dates & Class -->
+                        <div class="ticket-data-row">
+                            <div class="ticket-field">
+                                <span class="t-label">ISSUE DATE/TIME:</span>
+                                <span class="t-val fw-bold">${printDateStr}</span>
+                            </div>
+                            <div class="ticket-field">
+                                <span class="t-label">${isReturned ? 'RETURN DATE:' : 'VALID UPTO / DUE:'}</span>
+                                <span class="t-val fw-bold ${isReturned ? 'text-success' : 'text-danger'}">${isReturned ? (item.returnDate || 'RETURNED') : (item.dueDate || 'UNLIMITED')}</span>
+                            </div>
+                            <div class="ticket-field">
+                                <span class="t-label">CLASS / TYPE:</span>
+                                <span class="t-val fw-bold">${ticketClass}</span>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Borrower Passenger Info -->
+                        <div class="ticket-data-row highlight-bg">
+                            <div class="ticket-field flex-2">
+                                <span class="t-label">PASSENGER / BORROWER:</span>
+                                <span class="t-val fw-bold fs-6">${(item.studentName || 'N/A').toUpperCase()}</span>
+                            </div>
+                            <div class="ticket-field">
+                                <span class="t-label">REG / ROLL NO:</span>
+                                <span class="t-val font-monospace fw-bold">${item.rollNo || '-'}</span>
+                            </div>
+                            <div class="ticket-field">
+                                <span class="t-label">CLASS / DEPT:</span>
+                                <span class="t-val">${(item.classDiv || (isStaffUse ? 'STAFF DEPT' : 'GENERAL')).toUpperCase()}</span>
+                            </div>
+                        </div>
+
+                        <!-- Row 3: Publication / Book Details -->
+                        <div class="ticket-data-row">
+                            <div class="ticket-field flex-2">
+                                <span class="t-label">BOOK ACCESSION & TITLE:</span>
+                                <span class="t-val fw-bold text-primary">[#${item.bookId}] ${(item.bookTitle || 'LIBRARY BOOK').toUpperCase()}</span>
+                            </div>
+                            <div class="ticket-field">
+                                <span class="t-label">AUTHOR:</span>
+                                <span class="t-val">${author.toUpperCase()}</span>
+                            </div>
+                        </div>
+
+                        <!-- Row 4: Route / Station & Charges -->
+                        <div class="ticket-data-row">
+                            <div class="ticket-field">
+                                <span class="t-label">FROM STATION:</span>
+                                <span class="t-val">CENTRAL LIBRARY</span>
+                            </div>
+                            <div class="ticket-field">
+                                <span class="t-label">TRANSIT STATUS:</span>
+                                <span class="t-val fw-bold text-success">${txnType}</span>
+                            </div>
+                            <div class="ticket-field">
+                                <span class="t-label">FARE / FINE CHARGE:</span>
+                                <span class="t-val fw-bold">${fineText}</span>
+                            </div>
+                        </div>
+
+                        <div class="ticket-footer-text">
+                            *** WISHING YOU A HAPPY TRANSIT & ENRICHING READING JOURNEY! PLEASE RETAIN PASS ***
+                        </div>
+
+                    </div>
+
+                    <!-- Right Section: Verification Stub with Cut Line & QR Code -->
+                    <div class="ticket-stub-section">
+                        <div class="stub-notch-top"></div>
+                        <div class="stub-header">VERIFICATION STUB</div>
+                        <div class="stub-qr-box my-1">
+                            ${qrCodeSvg}
+                        </div>
+                        <div class="stub-acc-id">ID: #${item.bookId}</div>
+                        <div class="stub-seal-text">OFFICIALLY ISSUED</div>
+                        <div class="stub-notch-bottom"></div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    `;
+}
+
+function openPrintSlipModal(item) {
+    if (!item) return;
+
+    let modalOverlay = document.getElementById('printSlipModalOverlay');
+    if (!modalOverlay) {
+        modalOverlay = document.createElement('div');
+        modalOverlay.id = 'printSlipModalOverlay';
+        modalOverlay.className = 'custom-modal-overlay';
+        modalOverlay.style.zIndex = '999999';
+        document.body.appendChild(modalOverlay);
+    }
+
+    const slipContent = renderPrintSlipHTML(item);
+
+    modalOverlay.innerHTML = `
+        <div class="custom-modal-box" style="max-width: 680px; width: 95%;">
+            <div class="custom-modal-header bg-primary text-white p-3 rounded-top d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-printer-fill fs-4"></i>
+                    <h5 class="fw-bold mb-0 text-white">Library Transaction Print Slip</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" onclick="closePrintSlipModal()"></button>
+            </div>
+            <div class="custom-modal-body p-3 bg-light" style="max-height: 75vh; overflow-y: auto;">
+                ${slipContent}
+            </div>
+            <div class="custom-modal-footer bg-white p-3 d-flex justify-content-between align-items-center border-top">
+                <button type="button" class="btn btn-secondary fw-semibold" onclick="closePrintSlipModal()">Close</button>
+                <button type="button" class="btn btn-success fw-bold px-4 shadow-sm" onclick="executePrintSlipFromModal()">
+                    <i class="bi bi-printer-fill me-1"></i> Print Slip / Save PDF
+                </button>
+            </div>
+        </div>
+    `;
+
+    window._activePrintSlipItem = item;
+    modalOverlay.classList.add('active');
+}
+
+function closePrintSlipModal() {
+    const modalOverlay = document.getElementById('printSlipModalOverlay');
+    if (modalOverlay) {
+        modalOverlay.classList.remove('active');
+    }
+}
+
+function executePrintSlipFromModal() {
+    const item = window._activePrintSlipItem;
+    if (!item) return;
+
+    let printArea = document.getElementById('printableSlipArea');
+    if (!printArea) {
+        printArea = document.createElement('div');
+        printArea.id = 'printableSlipArea';
+        document.body.appendChild(printArea);
+    }
+
+    printArea.innerHTML = renderPrintSlipHTML(item);
+
+    setTimeout(() => {
+        window.print();
+    }, 200);
+}
+
+function printLedgerSlip(recordId) {
+    const ledger = getLedgerData();
+    const item = ledger.find(r => String(r.id) === String(recordId));
+    if (!item) {
+        showPopupAlert('Record Not Found', 'Could not find transaction record for printing slip!', 'warning');
+        return;
+    }
+    openPrintSlipModal(item);
+}
+
+function printLastTransactionSlip() {
+    const ledger = getLedgerData();
+    if (!ledger || ledger.length === 0) {
+        showPopupAlert('No Transactions', 'No circulation transaction records found to print slip!', 'warning');
+        return;
+    }
+    openPrintSlipModal(ledger[0]);
 }
 
 // Auto-initialize ledger table and student lookup on load
@@ -1325,12 +1765,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const studentsData = localStorage.getItem('libraryStudents');
             if (studentsData) {
                 const students = JSON.parse(studentsData);
-                const matched = students.find(s => String(s.rollNo) === String(val));
+                const matched = students.find(s => 
+                    String(s.rollNo || s.EnrollNo || '').toLowerCase() === val.toLowerCase() ||
+                    String(s.applicationId || '').toLowerCase() === val.toLowerCase()
+                );
                 if (matched) {
                     const nameInput = document.getElementById('studentNameInput');
                     const classInput = document.getElementById('classDivInput');
-                    if (nameInput) nameInput.value = matched.name;
-                    if (classInput) classInput.value = matched.classDiv || '10-A';
+                    if (nameInput) nameInput.value = matched.name || matched.Name || matched.studentName || '';
+                    if (classInput) {
+                        const classVal = matched.classDiv || matched.class || (matched.Course ? `${matched.Course}${matched.CurrentYear ? ' (' + matched.CurrentYear + 'Yr)' : ''}` : 'Shareeath');
+                        classInput.value = classVal;
+                    }
                 }
             }
         });
@@ -1483,68 +1929,246 @@ const CODE128_PATTERNS = [
     '311141','411131','211412','211214','211232','233111','2331112'
 ];
 
+// ==========================================
+// PURE SVG 2D QR CODE GENERATOR FOR BOOK ACCESSIONS
+// ==========================================
+
+function calcReedSolomonECC(dataBytes, eccCount) {
+    const gfExp = new Uint8Array(512);
+    const gfLog = new Uint8Array(256);
+    let x = 1;
+    for (let i = 0; i < 255; i++) {
+        gfExp[i] = x;
+        gfExp[i + 255] = x;
+        gfLog[x] = i;
+        x <<= 1;
+        if (x & 256) x ^= 285;
+    }
+
+    function gfMul(a, b) {
+        if (a === 0 || b === 0) return 0;
+        return gfExp[gfLog[a] + gfLog[b]];
+    }
+
+    let gen = [1];
+    for (let i = 0; i < eccCount; i++) {
+        const nextGen = new Array(gen.length + 1).fill(0);
+        for (let j = 0; j < gen.length; j++) {
+            nextGen[j] ^= gfMul(gen[j], gfExp[i]);
+            nextGen[j + 1] ^= gen[j];
+        }
+        gen = nextGen;
+    }
+
+    const res = new Array(eccCount).fill(0);
+    for (const b of dataBytes) {
+        const factor = b ^ res[0];
+        res.shift();
+        res.push(0);
+        for (let i = 0; i < eccCount; i++) {
+            res[i] ^= gfMul(gen[i], factor);
+        }
+    }
+    return res;
+}
+
+function buildQRMatrix(text) {
+    const len = text.length;
+    let version = 1;
+    if (len > 14) version = 2;
+    if (len > 26) version = 3;
+    const N = 17 + version * 4;
+
+    const matrix = Array.from({ length: N }, () => Array(N).fill(false));
+    const isReserved = Array.from({ length: N }, () => Array(N).fill(false));
+
+    function markReserved(r, c, val) {
+        matrix[r][c] = val;
+        isReserved[r][c] = true;
+    }
+
+    // Finder Patterns
+    function addFinder(topR, topC) {
+        for (let r = -1; r <= 7; r++) {
+            for (let c = -1; c <= 7; c++) {
+                const mr = topR + r;
+                const mc = topC + c;
+                if (mr >= 0 && mr < N && mc >= 0 && mc < N) {
+                    let isBlack = false;
+                    if (r >= 0 && r <= 6 && c >= 0 && c <= 6) {
+                        if (r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4)) {
+                            isBlack = true;
+                        }
+                    }
+                    markReserved(mr, mc, isBlack);
+                }
+            }
+        }
+    }
+
+    addFinder(0, 0);
+    addFinder(0, N - 7);
+    addFinder(N - 7, 0);
+
+    if (version >= 2) {
+        const alignPos = version === 2 ? 18 : 22;
+        for (let r = -2; r <= 2; r++) {
+            for (let c = -2; c <= 2; c++) {
+                const isBlack = (Math.abs(r) === 2 || Math.abs(c) === 2 || (r === 0 && c === 0));
+                markReserved(alignPos + r, alignPos + c, isBlack);
+            }
+        }
+    }
+
+    for (let i = 8; i < N - 8; i++) {
+        if (!isReserved[6][i]) markReserved(6, i, i % 2 === 0);
+        if (!isReserved[i][6]) markReserved(i, 6, i % 2 === 0);
+    }
+    markReserved(N - 8, 8, true);
+
+    for (let i = 0; i < 9; i++) {
+        if (!isReserved[8][i]) isReserved[8][i] = true;
+        if (!isReserved[i][8]) isReserved[i][8] = true;
+        if (!isReserved[8][N - 1 - i]) isReserved[8][N - 1 - i] = true;
+        if (!isReserved[N - 1 - i][8]) isReserved[N - 1 - i][8] = true;
+    }
+
+    const bits = [0, 1, 0, 0];
+    const countBits = (version <= 9) ? 8 : 16;
+    for (let i = countBits - 1; i >= 0; i--) {
+        bits.push((len >> i) & 1);
+    }
+    for (let i = 0; i < len; i++) {
+        const code = text.charCodeAt(i);
+        for (let b = 7; b >= 0; b--) {
+            bits.push((code >> b) & 1);
+        }
+    }
+    while (bits.length % 8 !== 0) bits.push(0);
+
+    const capacityBytes = version === 1 ? 16 : (version === 2 ? 28 : 44);
+    const dataBytes = [];
+    for (let i = 0; i < bits.length; i += 8) {
+        let byteVal = 0;
+        for (let b = 0; b < 8; b++) {
+            byteVal = (byteVal << 1) | (bits[i + b] || 0);
+        }
+        dataBytes.push(byteVal);
+    }
+    const padPatterns = [236, 17];
+    let padIdx = 0;
+    while (dataBytes.length < capacityBytes) {
+        dataBytes.push(padPatterns[padIdx]);
+        padIdx = (padIdx + 1) % 2;
+    }
+
+    const eccCount = version === 1 ? 10 : (version === 2 ? 16 : 26);
+    const eccBytes = calcReedSolomonECC(dataBytes, eccCount);
+    const finalCodewords = [...dataBytes, ...eccBytes];
+
+    const allBits = [];
+    for (const byteVal of finalCodewords) {
+        for (let b = 7; b >= 0; b--) {
+            allBits.push((byteVal >> b) & 1);
+        }
+    }
+
+    let bitIdx = 0;
+    let right = N - 1;
+    let dir = -1;
+
+    while (right > 0) {
+        if (right === 6) right--;
+        const col1 = right;
+        const col2 = right - 1;
+        const rowStart = (dir === -1) ? N - 1 : 0;
+        const rowEnd = (dir === -1) ? -1 : N;
+
+        for (let r = rowStart; r !== rowEnd; r += dir) {
+            for (const c of [col1, col2]) {
+                if (!isReserved[r][c]) {
+                    const bit = bitIdx < allBits.length ? allBits[bitIdx++] : 0;
+                    matrix[r][c] = bit === 1;
+                }
+            }
+        }
+        dir = -dir;
+        right -= 2;
+    }
+
+    for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+            if (!isReserved[r][c]) {
+                if ((r + c) % 2 === 0) {
+                    matrix[r][c] = !matrix[r][c];
+                }
+            }
+        }
+    }
+
+    const formatBits = [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0];
+    const fmtCoords1 = [
+        [8, 0], [8, 1], [8, 2], [8, 3], [8, 4], [8, 5], [8, 7], [8, 8],
+        [7, 8], [5, 8], [4, 8], [3, 8], [2, 8], [1, 8], [0, 8]
+    ];
+    const fmtCoords2 = [
+        [N - 1, 8], [N - 2, 8], [N - 3, 8], [N - 4, 8], [N - 5, 8], [N - 6, 8], [N - 7, 8],
+        [8, N - 8], [8, N - 7], [8, N - 6], [8, N - 5], [8, N - 4], [8, N - 3], [8, N - 2], [8, N - 1]
+    ];
+    for (let i = 0; i < 15; i++) {
+        const val = formatBits[i] === 1;
+        matrix[fmtCoords1[i][0]][fmtCoords1[i][1]] = val;
+        matrix[fmtCoords2[i][0]][fmtCoords2[i][1]] = val;
+    }
+
+    return matrix;
+}
+
+function generateQRCodeSVG(text, options = {}) {
+    const str = String(text || '').trim();
+    if (!str) return '<svg width="0" height="0"></svg>';
+    const size = options.size || options.height || 70;
+    const displayValue = options.displayValue !== false;
+
+    const qrMatrix = buildQRMatrix(str);
+    const numModules = qrMatrix.length;
+    const margin = 2;
+    const viewBoxSize = numModules + margin * 2;
+
+    let pathD = '';
+    for (let r = 0; r < numModules; r++) {
+        for (let c = 0; c < numModules; c++) {
+            if (qrMatrix[r][c]) {
+                const x = c + margin;
+                const y = r + margin;
+                pathD += `M${x},${y}h1v1h-1z `;
+            }
+        }
+    }
+
+    const totalSvgHeight = viewBoxSize + (displayValue ? 3.5 : 0);
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${viewBoxSize} ${totalSvgHeight}" width="${size}" height="${displayValue ? Math.round(size * 1.15) : size}" class="book-qr-code-svg">
+        <rect width="100%" height="100%" fill="#ffffff" rx="1"/>
+        <path d="${pathD}" fill="#0f172a" />
+        ${displayValue ? `<text x="${viewBoxSize / 2}" y="${viewBoxSize + 2.8}" font-family="Consolas, monospace" font-size="2.4" font-weight="bold" text-anchor="middle" fill="#0284c7" letter-spacing="0.2px">${str}</text>` : ''}
+    </svg>`;
+}
+
 /**
- * Generate pure SVG Code 128 barcode string for any book code ID.
+ * Generate pure 2D SVG QR Code string for any book code ID.
  */
 function renderBookBarcode(codeText, options = {}) {
-    const height = options.height || 30;
-    const widthModule = options.width || 1.2;
+    const height = options.height || options.size || 70;
     const displayValue = options.displayValue !== false;
-    const fontSize = options.fontSize || 9;
 
     const str = String(codeText || '').trim();
     if (!str) return '<svg width="0" height="0"></svg>';
 
-    let checksum = 104; // Start B Code128
-    const symbolIndices = [104];
-
-    for (let i = 0; i < str.length; i++) {
-        const code = str.charCodeAt(i) - 32;
-        const val = (code >= 0 && code <= 95) ? code : 0;
-        symbolIndices.push(val);
-        checksum += val * (i + 1);
-    }
-
-    checksum = checksum % 103;
-    symbolIndices.push(checksum);
-    symbolIndices.push(106); // Stop symbol
-
-    let modules = '';
-    for (const idx of symbolIndices) {
-        modules += CODE128_PATTERNS[idx] || CODE128_PATTERNS[0];
-    }
-
-    let totalModules = 0;
-    for (let i = 0; i < modules.length; i++) {
-        totalModules += parseInt(modules[i], 10);
-    }
-
-    const quietZone = 6;
-    const svgWidth = Math.ceil((totalModules * widthModule) + (quietZone * 2));
-    const svgHeight = height + (displayValue ? fontSize + 4 : 0);
-
-    let x = quietZone;
-    let rects = '';
-    let isBar = true;
-
-    for (let i = 0; i < modules.length; i++) {
-        const w = parseInt(modules[i], 10) * widthModule;
-        if (isBar) {
-            rects += `<rect x="${x.toFixed(2)}" y="0" width="${w.toFixed(2)}" height="${height}" fill="#0f172a" />`;
-        }
-        x += w;
-        isBar = !isBar;
-    }
-
-    let textSvg = '';
-    if (displayValue) {
-        textSvg = `<text x="${(svgWidth / 2).toFixed(2)}" y="${(height + fontSize + 1).toFixed(2)}" font-family="Consolas, monospace" font-size="${fontSize}" font-weight="bold" text-anchor="middle" fill="#0284c7" letter-spacing="1px">${str}</text>`;
-    }
-
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgWidth} ${svgHeight}" width="${svgWidth}" height="${svgHeight}" class="book-barcode-svg">
-        ${rects}
-        ${textSvg}
-    </svg>`;
+    return generateQRCodeSVG(str, {
+        size: height,
+        displayValue: displayValue
+    });
 }
 
 /**
@@ -1589,10 +2213,10 @@ function renderBookBarcodeLabelCard(b) {
                 <div class="barcode-address-line font-monospace">679335</div>
             </div>
 
-            <!-- Right Column: White Barcode Box -->
+            <!-- Right Column: White Barcode Stamp Box -->
             <div class="barcode-stamp-box">
                 <div class="barcode-stamp-title" title="${bookTitle.replace(/"/g, '&quot;')}">${bookTitle}</div>
-                <div class="barcode-stamp-svg">${renderBookBarcode(bookId, { height: 26, fontSize: 8 })}</div>
+                <div class="barcode-stamp-svg">${renderBookBarcode(bookId, { height: 48, fontSize: 8 })}</div>
                 <div class="barcode-stamp-id">ID: ${bookId} | ${bookSection}</div>
             </div>
         </div>
