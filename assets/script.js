@@ -1229,7 +1229,7 @@ function switchEntryMode(mode) {
         if (barcodeSec) barcodeSec.style.display = 'block';
         if (modeBadge) {
             modeBadge.className = 'badge bg-primary fs-6 scan-pulse-badge';
-            modeBadge.innerHTML = '<i class="bi bi-qr-code-scan me-1"></i> Mode: Barcode Scanner Active';
+            modeBadge.innerHTML = '<i class="bi bi-qr-code-scan me-1"></i> Mode: QR Code Scanner Active';
         }
         startInlineScanner();
     } else {
