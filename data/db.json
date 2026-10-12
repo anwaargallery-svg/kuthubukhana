@@ -1,4 +1,16 @@
 {
+  "version": 6,
+  "lastUpdated": 1791806529851,
+  "passwords": {
+    "admin": "admin123",
+    "principal": "principal123",
+    "staff": "staff123"
+  },
+  "cloudSync": {
+    "cloudUrl": "",
+    "lastSynced": null,
+    "autoSync": true
+  },
   "books": {
     "H-001": {
       "title": "صحيح البخاري",
@@ -6,11 +18,11 @@
       "section": "H",
       "sectionName": "HADHEES",
       "cover": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4bd2JEXB-aRzdUSPX1J9reK-gGHFLwtruTpRBktFeJ_UCT68GTmENBJhU&s=10",
-      "status": "Available",
-      "issuedTo": null,
-      "issueDate": null,
-      "dueDate": null,
-      "allowedDays": 5
+      "status": "Issued",
+      "issuedTo": "SUHAIL (Roll #2)",
+      "issueDate": "2026-10-07",
+      "dueDate": "2026-10-18",
+      "allowedDays": 10
     },
     "H-002": {
       "title": "swaheeh muslim",
@@ -20,7 +32,9 @@
       "cover": "https://m.media-amazon.com/images/I/81cLxtv4FrL._UF1000,1000_QL80_.jpg",
       "status": "Available",
       "issuedTo": null,
-      "issueDate": null
+      "issueDate": null,
+      "dueDate": null,
+      "allowedDays": 10
     }
   },
   "ledger": [],
@@ -47,38 +61,7 @@
     "LR": "LITRATUR",
     "BH": "BIOGRAPHY"
   },
-  "students": [
-    {
-      "rollNo": "13",
-      "name": "jasir",
-      "classDiv": "10"
-    },
-    {
-      "rollNo": "20260025",
-      "EnrollNo": "20260025",
-      "applicationId": "ADM-3142",
-      "name": "MOHAMMED SHAMEEM K T",
-      "Name": "MOHAMMED SHAMEEM K T",
-      "classDiv": "Shareeath (1st Year)",
-      "Course": "Shareeath",
-      "CurrentYear": 1,
-      "Status": "Active",
-      "Password": "6238296010",
-      "houseName": "KALLITHODI",
-      "FatherName": "KUNHIMOHAMMED",
-      "fatherOccupation": "BUISINESS",
-      "motherName": "SHAHARBAN",
-      "Contact": "6238296010",
-      "Email": "shameemktfas@gmail.com",
-      "DOB": "2004-06-25",
-      "aadhar": "947035291541",
-      "Address": "KALLITHODI HOUSE THRIKKADERI ATTASSERI KOTTAPPURAM",
-      "madrasa5Name": "TANVEERUL ISLAM MADRASA",
-      "madrasa7Name": "TANVEERUL ISLAM MADRASA",
-      "schoolName": "NVAUPS PANAMANNA SOUTH",
-      "darsName": "",
-      "learnedKithabs": ""
-    }
-  ],
+  "students": [],
+  "classes": [],
   "isLibraryClosed": false
 }

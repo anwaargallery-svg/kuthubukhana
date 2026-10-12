@@ -67,10 +67,7 @@
                         </h1>
                         <p class="text-muted mb-0 small">Scan barcodes or type accession IDs to issue books to students and staff</p>
                     </div>
-                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <button type="button" class="btn btn-outline-primary btn-sm fw-bold px-3 py-2 shadow-sm rounded-3" onclick="printLastTransactionSlip()">
-                            <i class="bi bi-printer-fill me-1"></i> Print Last Slip
-                        </button>
+                    <div>
                         <div class="mode-switcher-container shadow-sm">
                             <input type="radio" class="btn-check" name="entryMode" id="modeManual" value="manual" checked onchange="switchEntryMode('manual')">
                             <label class="btn" for="modeManual"><i class="bi bi-keyboard me-1"></i> Manual</label>
@@ -186,7 +183,7 @@
 
                             <!-- SECTION C: Book Accession Details (Always Visible) -->
                             <div class="section-title-label mt-2">
-                                <i class="bi bi-qr-code-scan text-primary me-1"></i> Book Accession & QR Code Scan
+                                <i class="bi bi-upc-scan text-primary"></i> Book Accession & Barcode Scan
                             </div>
 
                             <!-- OPTION A: MANUAL ENTRY SECTION -->
@@ -205,7 +202,7 @@
                                                 <i class="bi bi-search"></i>
                                             </button>
                                         </div>
-                                        <small class="text-muted">Type ID, scan QR code, or search catalog</small>
+                                        <small class="text-muted">Type ID, scan barcode, or search catalog</small>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold">Book Title</label>
@@ -218,35 +215,16 @@
                                 </div>
                             </div>
 
-                            <!-- OPTION B: QR CODE SCANNER SECTION -->
+                            <!-- OPTION B: BARCODE SCANNER SECTION -->
                             <div id="barcodeScanSection" style="display: none;">
                                 <div class="p-4 bg-light border rounded-4 mb-4 text-center">
                                     <div id="inlineScannerError" class="alert alert-info py-2 small mb-2" style="display: none;"></div>
-                                    
-                                    <!-- Futuristic QR Code Camera Scanner Target Frame -->
-                                    <div class="qr-scanner-box-wrapper">
-                                        <div class="qr-scanner-viewport">
-                                            <!-- Reticle Overlay Corner Brackets -->
-                                            <div class="qr-target-overlay">
-                                                <div class="qr-corner qr-corner-tl"></div>
-                                                <div class="qr-corner qr-corner-tr"></div>
-                                                <div class="qr-corner qr-corner-bl"></div>
-                                                <div class="qr-corner qr-corner-br"></div>
-                                            </div>
-                                            <!-- Scanning Laser Beam -->
-                                            <div class="qr-laser-beam"></div>
-                                            <!-- Center Aiming Guide Icon -->
-                                            <i class="bi bi-qr-code qr-aiming-icon"></i>
-                                            <!-- Live Camera Video Container -->
-                                            <div id="inlineReader" style="width: 100%; min-height: 240px; margin: 0 auto;" class="bg-dark"></div>
-                                        </div>
-                                    </div>
-
-                                    <p class="text-muted small mb-3"><i class="bi bi-qr-code-scan text-primary me-1"></i>Point camera or webcam at <strong>QR Code</strong>, or use <strong>USB Scanner</strong>.</p>
+                                    <div id="inlineReader" style="width: 100%; max-width: 450px; min-height: 220px; margin: 0 auto;" class="rounded-3 border overflow-hidden bg-white mb-3 shadow-sm"></div>
+                                    <p class="text-muted small mb-2"><i class="bi bi-upc-scan me-1"></i>Point webcam or plug in any <strong>USB Barcode Reader</strong> to scan books.</p>
                                     <div class="btn-group btn-group-sm">
-                                        <button type="button" class="btn btn-outline-primary fw-semibold" onclick="simulateScan('101')"><i class="bi bi-qr-code me-1"></i>Scan QR Code #101</button>
-                                        <button type="button" class="btn btn-outline-primary fw-semibold" onclick="simulateScan('102')"><i class="bi bi-qr-code me-1"></i>Scan QR Code #102</button>
-                                        <button type="button" class="btn btn-outline-primary fw-semibold" onclick="simulateScan('103')"><i class="bi bi-qr-code me-1"></i>Scan QR Code #103</button>
+                                        <button type="button" class="btn btn-outline-primary" onclick="simulateScan('101')">Scan Barcode #101</button>
+                                        <button type="button" class="btn btn-outline-primary" onclick="simulateScan('102')">Scan Barcode #102</button>
+                                        <button type="button" class="btn btn-outline-primary" onclick="simulateScan('103')">Scan Barcode #103</button>
                                     </div>
                                 </div>
                             </div>

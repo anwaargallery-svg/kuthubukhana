@@ -384,9 +384,9 @@ function updateLiveBookBarcodePreview() {
         const val = idInput.value.trim();
         if (val && typeof renderBookBarcode === 'function') {
             previewDiv.innerHTML = `
-                <small class="text-muted d-block mb-1 font-monospace fw-semibold"><i class="bi bi-qr-code me-1"></i>Auto-Generated QR Code Preview:</small>
-                <div class="book-barcode-container shadow-sm p-2 bg-white rounded border d-inline-block">
-                    ${renderBookBarcode(val, { height: 60, fontSize: 9 })}
+                <small class="text-muted d-block mb-1 font-monospace fw-semibold"><i class="bi bi-upc-scan me-1"></i>Auto-Generated Barcode Preview:</small>
+                <div class="book-barcode-container shadow-sm p-2 bg-white rounded border">
+                    ${renderBookBarcode(val, { height: 32, fontSize: 9 })}
                 </div>
             `;
         } else {
@@ -1266,23 +1266,16 @@ function uploadBulkStudents(e) {
                 const parsed = JSON.parse(content);
                 const list = Array.isArray(parsed) ? parsed : Object.values(parsed);
                 list.forEach(st => {
-                    const roll = String(st.rollNo || st.EnrollNo || st.roll || st.applicationId || '').trim();
-                    if (roll) {
-                        const sName = st.name || st.Name || st.studentName || 'Student';
-                        const sClass = st.classDiv || st.class || (st.Course ? `${st.Course}${st.CurrentYear ? ' (' + st.CurrentYear + 'Yr)' : ''}` : 'Shareeath');
+                    if (st.rollNo || st.roll) {
+                        const roll = String(st.rollNo || st.roll).trim();
+                        const sName = st.name || st.studentName || 'Student';
+                        const sClass = st.classDiv || st.class || '10-A';
                         
-                        const itemObj = { 
-                            rollNo: roll, 
-                            name: sName, 
-                            classDiv: sClass,
-                            ...st 
-                        };
-
-                        const idx = students.findIndex(s => String(s.rollNo || s.EnrollNo) === String(roll));
+                        const idx = students.findIndex(s => String(s.rollNo) === String(roll));
                         if (idx >= 0) {
-                            students[idx] = { ...students[idx], ...itemObj };
+                            students[idx] = { rollNo: roll, name: sName, classDiv: sClass };
                         } else {
-                            students.push(itemObj);
+                            students.push({ rollNo: roll, name: sName, classDiv: sClass });
                         }
                         addedCount++;
                     }
@@ -1460,10 +1453,46 @@ function handleAddCustomClassForm(e) {
     }
 }
 
+// Handle Admin Password Change Form
+async function handleAdminUpdatePasswords(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const currentAdminPassword = document.getElementById('currentAdminPwdInput')?.value?.trim();
+    const newPrincipalPassword = document.getElementById('newPrincipalPwdInput')?.value?.trim();
+    const newStaffPassword = document.getElementById('newStaffPwdInput')?.value?.trim();
+    const newAdminPassword = document.getElementById('newAdminPwdInput')?.value?.trim();
+
+    if (!currentAdminPassword) {
+        showAdminToast('Please enter your current Admin password to authorize changes.', 'danger', 'bi-shield-exclamation');
+        return;
+    }
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/auth/update-passwords`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentAdminPassword, newAdminPassword, newPrincipalPassword, newStaffPassword })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showAdminToast('✅ Portal passwords successfully updated!', 'success', 'bi-key-fill');
+            const modalEl = document.getElementById('changePasswordsModal');
+            if (modalEl && typeof bootstrap !== 'undefined') {
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+            }
+            document.getElementById('changePasswordsForm')?.reset();
+        } else {
+            showAdminToast(data.message || 'Failed to update passwords.', 'danger', 'bi-exclamation-triangle-fill');
+        }
+    } catch (err) {
+        showAdminToast('Network error while saving passwords.', 'danger', 'bi-x-circle-fill');
+    }
+}
+
 // Initialize Admin Dashboard on Load
 document.addEventListener('DOMContentLoaded', () => {
     renderCategoryOptions();
     renderAdminDashboard();
     renderStudentDirectory();
-
 });

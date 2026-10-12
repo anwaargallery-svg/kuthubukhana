@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Library Fine Receipt Slip - Kuthbukhana Anwariyya</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../style.css?v=atm3">
+    <script defer src="https://code.jquery.com/jquery-4.0.0.js"
+        integrity="sha256-9fsHeVnKBvqh3FB2HYu7g2xseAZ5MlN6Kz/qnkASV8U=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <script defer src="../script.js?v=atm3"></script>
+    <style>
+        body {
+            background-color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        .slip-page-container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 15px;
+        }
+
+        .slip-actions-bar {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: gap;
+            gap: 12px;
+        }
+
+        .slip-editor-card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            padding: 20px;
+            display: none;
+        }
+
+        @media print {
+            body {
+                background: #ffffff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .slip-actions-bar,
+            .slip-editor-card,
+            .navbar,
+            .no-print {
+                display: none !important;
+            }
+            .slip-page-container {
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            #printableFineSlipArea {
+                padding: 0 !important;
+                background: #ffffff !important;
+            }
+            .fine-slip-card {
+                box-shadow: none !important;
+                border: 2px solid #000 !important;
+                margin: 0 auto !important;
+                max-width: 100% !important;
+                page-break-inside: avoid !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top no-print">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="../../index.html" onclick="gohome(); return false;">
+                <img class="img-fluid rounded-circle" src="../images/image.png" alt="Library Logo" style="width: 40px; height: 40px; object-fit: cover;">
+                <span>Kuthbukhana Anwariyya</span>
+            </a>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <button class="btn btn-outline-secondary btn-sm" onclick="gohome()"><i class="bi bi-house-door me-1"></i> Home</button>
+                <button class="btn btn-outline-primary btn-sm" onclick="openlibrary()"><i class="bi bi-book me-1"></i> Open Library</button>
+                <button class="btn btn-outline-success btn-sm" onclick="checkledger()"><i class="bi bi-journal-text me-1"></i> Check Ledger</button>
+                <button class="btn btn-warning btn-sm active fw-bold text-dark"><i class="bi bi-receipt-cutoff me-1"></i> Fine Slip</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="slip-page-container">
+        <!-- Floating Actions Toolbar -->
+        <div class="slip-actions-bar no-print">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-danger p-2 fs-6"><i class="bi bi-receipt-cutoff"></i></span>
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark">Official Fine Slip Generator & Viewer</h5>
+                    <small class="text-muted">Kuthbukhana Anwariyya &bull; Circulation Fine Receipt</small>
+                </div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <!-- Size Switcher Buttons -->
+                <div class="btn-group btn-group-sm" role="group" aria-label="Slip Size Options">
+                    <button type="button" class="btn btn-sm btn-primary active btn-slip-layout-atm-card" onclick="setFineSlipLayout('atm-card')" title="Standard ATM Card Size (85.6 × 54 mm)">
+                        <i class="bi bi-credit-card-2-front me-1"></i> ATM Card (85.6 &times; 54 mm)
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-slip-layout-atm-pocket" onclick="setFineSlipLayout('atm-pocket')" title="Pocket Slip (85.6 mm width)">
+                        <i class="bi bi-receipt me-1"></i> Pocket Slip
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-slip-layout-standard" onclick="setFineSlipLayout('standard')" title="Full Page Detailed Slip">
+                        <i class="bi bi-file-earmark-text me-1"></i> Full Slip
+                    </button>
+                </div>
+                <button class="btn btn-outline-primary btn-sm fw-semibold" onclick="toggleStandaloneEditor()">
+                    <i class="bi bi-sliders me-1"></i> <span id="editorToggleText">Customize / Edit Slip</span>
+                </button>
+                <button class="btn btn-outline-dark btn-sm fw-semibold" onclick="copyFineSlipSummary()">
+                    <i class="bi bi-clipboard-check me-1"></i> Copy Text
+                </button>
+                <button class="btn btn-success fw-bold px-3 shadow-sm" onclick="printActiveFineSlip()">
+                    <i class="bi bi-printer-fill me-1"></i> Print Fine Slip
+                </button>
+            </div>
+        </div>
+
+        <!-- Collapsible Editor Card -->
+        <div class="slip-editor-card no-print" id="standaloneEditorCard">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-pencil-square me-1"></i> Customize Fine Slip Particulars</h6>
+                <button class="btn btn-sm btn-outline-secondary" onclick="toggleStandaloneEditor()">Close Editor</button>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-muted mb-1">Load From Library Ledger</label>
+                <select id="standaloneQuickSelect" class="form-select form-select-sm" onchange="loadFromStandalonePicker(this.value)">
+                    <option value="">-- Select student or book from ledger --</option>
+                </select>
+            </div>
+
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold mb-0">Student / Borrower Name</label>
+                    <input type="text" id="slipEditStudentName" class="form-control form-control-sm" oninput="liveUpdateFineSlip()">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-0">Roll No</label>
+                    <input type="text" id="slipEditRollNo" class="form-control form-control-sm" oninput="liveUpdateFineSlip()">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-0">Class / Div</label>
+                    <input type="text" id="slipEditClassDiv" class="form-control form-control-sm" oninput="liveUpdateFineSlip()">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold mb-0">Book Code / ID</label>
+                    <input type="text" id="slipEditBookId" class="form-control form-control-sm" oninput="liveUpdateFineSlip()">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold mb-0">Book Name (Title)</label>
+                    <input type="text" id="slipEditBookTitle" class="form-control form-control-sm" oninput="liveUpdateFineSlip()">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold mb-0">Author Name</label>
+                    <input type="text" id="slipEditAuthor" class="form-control form-control-sm" oninput="liveUpdateFineSlip()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-0">Category / Section</label>
+                    <input type="text" id="slipEditSection" class="form-control form-control-sm" oninput="liveUpdateFineSlip()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-0">Issue Date</label>
+                    <input type="date" id="slipEditIssueDate" class="form-control form-control-sm" onchange="liveRecalculateFineSlip()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-0">Due Date</label>
+                    <input type="date" id="slipEditDueDate" class="form-control form-control-sm" onchange="liveUpdateFineSlip()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-0">Return / Slip Date</label>
+                    <input type="date" id="slipEditReturnDate" class="form-control form-control-sm" onchange="liveRecalculateFineSlip()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-0 text-danger"><i class="bi bi-clock-history"></i> Overdue Working Days (Ower Days)</label>
+                    <input type="number" id="slipEditOverdueDays" class="form-control form-control-sm" min="0" oninput="liveRecalculateFineSlipAmount()">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-0">Fine Rate (₹/day)</label>
+                    <input type="number" id="slipEditFineRate" class="form-control form-control-sm" value="5" min="0" oninput="liveRecalculateFineSlipAmount()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-0 text-warning"><i class="bi bi-exclamation-triangle-fill"></i> Book Damage Fine (₹)</label>
+                    <input type="number" id="slipEditDamageFine" class="form-control form-control-sm" value="0" min="0" oninput="liveRecalculateFineSlipAmount()">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold mb-0">Damage Reason / Notes</label>
+                    <input type="text" id="slipEditDamageReason" class="form-control form-control-sm" placeholder="e.g. Torn pages, scribbled, cover torn, or None" oninput="liveUpdateFineSlip()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-0 text-success">Total Fine Amount (₹)</label>
+                    <input type="number" id="slipEditFineAmount" class="form-control form-control-sm fw-bold text-danger" oninput="liveUpdateFineSlip()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-0">Status</label>
+                    <select id="slipEditStatus" class="form-select form-select-sm" onchange="liveUpdateFineSlip()">
+                        <option value="paid">✅ Paid (Fine Collected)</option>
+                        <option value="due">⚠️ Due (Pending)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-0">Payment Mode</label>
+                    <input type="text" id="slipEditPaymentMode" class="form-control form-control-sm" value="Cash Desk" oninput="liveUpdateFineSlip()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Rendered Fine Slip Container -->
+        <div class="fine-slip-wrapper p-0 bg-transparent" id="printableFineSlipArea">
+            <div id="fineSlipPreviewContainer" class="w-100 d-flex justify-content-center">
+                <!-- Rendered dynamically via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleStandaloneEditor() {
+            const card = document.getElementById('standaloneEditorCard');
+            const toggleText = document.getElementById('editorToggleText');
+            if (card.style.display === 'none' || !card.style.display) {
+                card.style.display = 'block';
+                if (toggleText) toggleText.innerText = 'Hide Editor';
+            } else {
+                card.style.display = 'none';
+                if (toggleText) toggleText.innerText = 'Customize / Edit Slip';
+            }
+        }
+
+        function getSlipDataFromLedgerOrBook(id) {
+            const ledger = typeof getLedgerData === 'function' ? getLedgerData() : [];
+            const books = typeof getBooksData === 'function' ? getBooksData() : {};
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            let item = ledger.find(r => String(r.id) === String(id) || String(r.bookId) === String(id));
+            if (!item && !isNaN(Number(id)) && ledger[Number(id)]) {
+                item = ledger[Number(id)];
+            }
+
+            if (item) {
+                const book = books[item.bookId] || {};
+                const isStaff = item.rollNo === 'STAFF' || (item.status && item.status.includes('Staff'));
+                const isReturned = item.status === 'Returned';
+                const allowedDays = item.allowedDays || (getClassGradeNum(item.classDiv) >= 6 ? 10 : 5);
+                const returnOrToday = isReturned && item.returnDate ? item.returnDate : todayStr;
+                const workingDaysElapsed = countWorkingDays(item.issueDate, returnOrToday);
+                const overdueWorkingDays = Math.max(0, workingDaysElapsed - allowedDays);
+                const calculatedOverdueFine = overdueWorkingDays * 5;
+
+                const damageFine = parseFloat(item.damageFine) || 0;
+                const damageReason = item.damageReason || (damageFine > 0 ? 'Physical Damage / Penalty' : 'None Reported (Intact)');
+                const calculatedTotal = calculatedOverdueFine + damageFine;
+
+                const fineAmount = (isReturned && item.fineAmount !== undefined && item.fineAmount !== null) 
+                    ? parseFloat(item.fineAmount) 
+                    : calculatedTotal;
+                const finePaid = isReturned ? (item.finePaid ?? (item.fineAmount > 0)) : false;
+
+                return {
+                    receiptNo: 'FS-' + (item.id ? String(item.id).slice(-6) : Date.now().toString().slice(-6)),
+                    bookId: item.bookId,
+                    bookTitle: item.bookTitle || book.title || 'Unknown Title',
+                    author: item.author || book.author || 'Unknown Author',
+                    section: book.sectionName || book.section || 'General',
+                    studentName: item.studentName || 'Student',
+                    rollNo: item.rollNo || 'N/A',
+                    classDiv: item.classDiv || 'N/A',
+                    issueDate: item.issueDate,
+                    dueDate: item.dueDate || 'N/A',
+                    returnDate: returnOrToday,
+                    allowedDays: allowedDays,
+                    overdueDays: isReturned ? Math.max(0, workingDaysElapsed - allowedDays) : overdueWorkingDays,
+                    fineRate: 5,
+                    overdueFine: calculatedOverdueFine,
+                    damageFine: damageFine,
+                    damageReason: damageReason,
+                    fineAmount: fineAmount,
+                    finePaid: finePaid,
+                    paymentMode: 'Cash Desk',
+                    receiptDate: todayStr
+                };
+            }
+
+            if (books[id]) {
+                const book = books[id];
+                const isStaff = book.issuedTo && book.issuedTo.includes('STAFF');
+                const allowed = book.allowedDays || (getClassGradeNum(book.classDiv) >= 6 ? 10 : 5);
+                const fineCalc = calculateOverdueFine(book.issueDate, allowed, 5, isStaff);
+                return {
+                    receiptNo: 'FS-' + (Date.now().toString().slice(-6)),
+                    bookId: id,
+                    bookTitle: book.title || 'Unknown Title',
+                    author: book.author || 'Unknown Author',
+                    section: book.sectionName || book.section || 'General',
+                    studentName: book.issuedTo || 'Borrower',
+                    rollNo: 'N/A',
+                    classDiv: book.classDiv || 'N/A',
+                    issueDate: book.issueDate || todayStr,
+                    dueDate: book.dueDate || todayStr,
+                    returnDate: todayStr,
+                    allowedDays: allowed,
+                    overdueDays: fineCalc.overdueDays,
+                    fineRate: 5,
+                    overdueFine: fineCalc.fineAmount,
+                    damageFine: 0,
+                    damageReason: 'None Reported (Intact)',
+                    fineAmount: fineCalc.fineAmount,
+                    finePaid: false,
+                    paymentMode: 'Cash Desk',
+                    receiptDate: todayStr
+                };
+            }
+
+            return null;
+        }
+
+        function loadFromStandalonePicker(key) {
+            if (!key) return;
+            const data = getSlipDataFromLedgerOrBook(key);
+            if (data) {
+                currentActiveFineSlipData = data;
+                const container = document.getElementById('fineSlipPreviewContainer');
+                if (container) container.innerHTML = generateFineSlipCardHTML(currentActiveFineSlipData, currentFineSlipLayoutMode);
+                populateSlipEditorFields(currentActiveFineSlipData);
+            }
+        }
+
+        // Initialize page content on load
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const queryId = urlParams.get('id') || urlParams.get('ledgerId') || urlParams.get('bookId');
+                const storedDataStr = sessionStorage.getItem('activeFineSlipData');
+                const savedLayout = sessionStorage.getItem('preferredSlipLayout');
+                if (savedLayout) currentFineSlipLayoutMode = savedLayout;
+
+                if (storedDataStr) {
+                    try {
+                        currentActiveFineSlipData = JSON.parse(storedDataStr);
+                    } catch (e) {
+                        console.error('Error parsing stored slip data:', e);
+                    }
+                }
+
+                if (!currentActiveFineSlipData && queryId) {
+                    currentActiveFineSlipData = getSlipDataFromLedgerOrBook(queryId);
+                }
+
+                if (!currentActiveFineSlipData) {
+                    // Fallback to first ledger item or sample overdue record
+                    const ledger = typeof getLedgerData === 'function' ? getLedgerData() : [];
+                    const overdueItem = ledger.find(item => {
+                        const fine = calculateOverdueFine(item.issueDate, 10, 5);
+                        return fine.overdueDays > 0;
+                    }) || ledger[0];
+
+                    if (overdueItem) {
+                        currentActiveFineSlipData = getSlipDataFromLedgerOrBook(overdueItem.id || overdueItem.bookId);
+                    }
+                }
+
+                // If still no data, generate default sample
+                if (!currentActiveFineSlipData) {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    currentActiveFineSlipData = {
+                        receiptNo: 'FS-' + Date.now().toString().slice(-6),
+                        bookId: 'H-001',
+                        bookTitle: 'صحيح البخاري',
+                        author: 'imam bukhari',
+                        section: 'HADHEES',
+                        studentName: 'SUHAIL',
+                        rollNo: '2',
+                        classDiv: '9',
+                        issueDate: '2026-10-01',
+                        dueDate: '2026-10-11',
+                        returnDate: todayStr,
+                        allowedDays: 10,
+                        overdueDays: 2,
+                        fineRate: 5,
+                        overdueFine: 10,
+                        damageFine: 0,
+                        damageReason: 'None Reported (Intact)',
+                        fineAmount: 10,
+                        finePaid: true,
+                        paymentMode: 'Cash Desk',
+                        receiptDate: todayStr
+                    };
+                }
+
+                if (currentActiveFineSlipData) {
+                    setFineSlipLayout(currentFineSlipLayoutMode);
+                    const container = document.getElementById('fineSlipPreviewContainer');
+                    if (container) {
+                        container.innerHTML = generateFineSlipCardHTML(currentActiveFineSlipData, currentFineSlipLayoutMode);
+                    }
+                    populateSlipEditorFields(currentActiveFineSlipData);
+                }
+
+                // Populate standalone picker
+                const picker = document.getElementById('standaloneQuickSelect');
+                if (picker && typeof getLedgerData === 'function') {
+                    const ledger = getLedgerData();
+                    let opts = '<option value="">-- Choose a student or book from ledger --</option>';
+                    ledger.forEach((item, idx) => {
+                        opts += `<option value="${item.id || idx}">${item.studentName} (Roll #${item.rollNo}) - "${item.bookTitle}" [${item.bookId}]</option>`;
+                    });
+                    picker.innerHTML = opts;
+                }
+            }, 200);
+        });
+    </script>
+</body>
+
+</html>

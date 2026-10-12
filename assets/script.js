@@ -21,6 +21,17 @@ function checkledger() {
     }
 }
 
+function openfineslip() {
+    const path = window.location.pathname.replace(/\\/g, '/');
+    if (path.includes('lead/admin') || path.includes('lead/principal')) {
+        window.location.href = '../../fineSlip.html';
+    } else if (path.includes('subpages')) {
+        window.location.href = 'fineSlip.html';
+    } else {
+        window.location.href = 'assets/subpages/fineSlip.html';
+    }
+}
+
 function gohome() {
     const path = window.location.pathname.replace(/\\/g, '/');
     if (path.includes('lead/admin') || path.includes('lead/principal')) {
@@ -58,6 +69,56 @@ function goprincipal() {
     }
 }
 
+function godataentry() {
+    const path = window.location.pathname.replace(/\\/g, '/');
+    if (path.includes('lead/admin') || path.includes('lead/principal')) {
+        window.location.href = '../../data-entry.html';
+    } else if (path.includes('subpages')) {
+        window.location.href = 'data-entry.html';
+    } else {
+        window.location.href = 'assets/subpages/data-entry.html';
+    }
+}
+
+function gologin() {
+    const path = window.location.pathname.replace(/\\/g, '/');
+    if (path.includes('lead/admin') || path.includes('lead/principal')) {
+        window.location.href = '../../login.html';
+    } else if (path.includes('subpages')) {
+        window.location.href = 'login.html';
+    } else {
+        window.location.href = 'assets/subpages/login.html';
+    }
+}
+
+async function openConnectModal() {
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/network-info`);
+        if (res.ok) {
+            const data = await res.json();
+            const input = document.getElementById('indexNetworkUrlInput');
+            if (input) input.value = data.networkUrl;
+            const qrImg = document.getElementById('indexQrCodeImg');
+            if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data.networkUrl)}`;
+        }
+    } catch (e) {
+        console.warn('Network info error:', e);
+    }
+    const modalEl = document.getElementById('connectModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+function copyIndexNetworkUrl() {
+    const input = document.getElementById('indexNetworkUrlInput');
+    if (!input) return;
+    input.select();
+    navigator.clipboard.writeText(input.value);
+    alert('Link copied: ' + input.value);
+}
+
 // Default initial inventory database with Section Categories
 const initialBooks = {};
 
@@ -68,8 +129,8 @@ const defaultCategories = {};
 const defaultStudents = [];
 
 // Backend REST API Sync Layer
-const API_BASE_URL = (window.location.protocol && window.location.protocol.startsWith('http')) 
-    ? window.location.origin 
+const API_BASE_URL = (window.location.protocol && window.location.protocol.startsWith('http'))
+    ? window.location.origin
     : 'http://localhost:5000';
 
 let cachedBackendData = {
@@ -114,7 +175,7 @@ async function toggleCloseLibrary(e) {
     if (e && e.preventDefault) e.preventDefault();
     const current = isLibraryClosed();
     const actionName = current ? 'RE-OPEN' : 'CLOSE';
-    
+
     const confirmed = await showPopupConfirm(
         `${actionName} Library`,
         `Are you sure you want to ${actionName} the Library?\n\n${current ? 'Book issue and return transactions will be re-enabled.' : 'Book transactions will be paused while the library is closed.'}`,
@@ -341,11 +402,17 @@ function getBooksData() {
 function saveBooksData(books) {
     localStorage.setItem('libraryBooks', JSON.stringify(books));
     cachedBackendData.books = books;
-    fetch(`${API_BASE_URL}/api/books`, {
+    fetch(`${API_BASE_URL}/api/books/batch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(books)
-    }).catch(err => console.warn('Failed to sync books to backend REST API:', err));
+    }).catch(err => {
+        fetch(`${API_BASE_URL}/api/books`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(books)
+        }).catch(e => console.warn('Failed to sync books to backend REST API:', e));
+    });
 }
 
 function getLedgerData() {
@@ -390,7 +457,7 @@ function saveCategoriesData(categories) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(categories)
     }).then(res => res.json())
-      .catch(err => console.warn('Failed to sync categories to backend REST API:', err));
+        .catch(err => console.warn('Failed to sync categories to backend REST API:', err));
 }
 
 // Custom Classes & Divisions Management Helper Functions
@@ -400,7 +467,7 @@ function getClassesData() {
     try {
         const parsed = JSON.parse(data);
         return Array.isArray(parsed) ? parsed : [];
-    } catch(e) {
+    } catch (e) {
         return [];
     }
 }
@@ -408,7 +475,7 @@ function getClassesData() {
 function saveClassesData(classesList) {
     const cleanList = Array.isArray(classesList) ? classesList.map(c => String(c).trim()).filter(Boolean) : [];
     const uniqueList = Array.from(new Set(cleanList)).sort();
-    
+
     localStorage.setItem('libraryClasses', JSON.stringify(uniqueList));
     if (typeof cachedBackendData !== 'undefined' && cachedBackendData) {
         cachedBackendData.classes = uniqueList;
@@ -484,7 +551,7 @@ function handleBookInput(val) {
         // Auto-fill Title & Author
         if (bookTitleInput) bookTitleInput.value = book.title;
         if (bookAuthorInput) bookAuthorInput.value = book.author || 'Unknown Author';
-        
+
         if (bookCoverImg) bookCoverImg.src = book.cover;
         if (bookTitlePreview) bookTitlePreview.innerText = book.title;
         if (bookAuthorPreview) bookAuthorPreview.innerText = "Author: " + (book.author || 'Unknown') + (book.sectionName ? ` | Section: [${book.section}] ${book.sectionName}` : '');
@@ -542,8 +609,8 @@ function handleBookInput(val) {
 
         if (bookCoverImg) {
             bookCoverImg.src = coverUrl;
-            bookCoverImg.onerror = function() {
-                this.onerror = function() {
+            bookCoverImg.onerror = function () {
+                this.onerror = function () {
                     this.src = fallbackImg;
                 };
                 this.src = altCoverUrl;
@@ -601,8 +668,8 @@ function countWorkingDays(startDateStr, endDateStr = new Date().toISOString().sp
     if (!startDateStr) return 0;
     let start = new Date(startDateStr);
     let end = new Date(endDateStr);
-    start.setHours(0,0,0,0);
-    end.setHours(0,0,0,0);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
 
     if (start >= end) return 0;
 
@@ -622,7 +689,7 @@ function countWorkingDays(startDateStr, endDateStr = new Date().toISOString().sp
 // Add N working days to a start date string (excluding Sundays)
 function addWorkingDays(startDateStr, numWorkingDays) {
     let cur = startDateStr ? new Date(startDateStr) : new Date();
-    cur.setHours(0,0,0,0);
+    cur.setHours(0, 0, 0, 0);
 
     let added = 0;
     while (added < numWorkingDays) {
@@ -824,7 +891,7 @@ async function processIssueBook(e) {
     saveBooksData(books);
 
     // Record in Ledger
-    const newRecord = {
+    ledger.unshift({
         id: Date.now(),
         rollNo: rollNo,
         studentName: studentName,
@@ -839,24 +906,13 @@ async function processIssueBook(e) {
         status: "Issued",
         fineAmount: 0,
         finePaid: false
-    };
-    ledger.unshift(newRecord);
+    });
     saveLedgerData(ledger);
+
+    showPopupAlert('✅ BOOK ISSUED SUCCESSFULLY!', `Book: "${bookTitle}"\nIssued To: ${studentName} (Roll #${rollNo}, Class ${classDiv || 'N/A'})\nIssue Date: ${todayStr}\nDue Date: ${dueDateStr} (${allowedWorkingWeeks} Working Week(s) / ${allowedWorkingDays} Working Days allowed)\n\nBorrowing Limit: ${activeIssuedForStudent.length + 1} of ${maxAllowedBooks} book(s) used.`, 'success');
 
     // Refresh preview card
     handleBookInput(bookId);
-
-    const wantPrint = await showPopupConfirm(
-        '✅ BOOK ISSUED SUCCESSFULLY!',
-        `Book: "${bookTitle}"\nIssued To: ${studentName} (Roll #${rollNo}, Class ${classDiv || 'N/A'})\nIssue Date: ${todayStr}\nDue Date: ${dueDateStr} (${allowedWorkingWeeks} Working Week(s) / ${allowedWorkingDays} Working Days allowed)\n\nBorrowing Limit: ${activeIssuedForStudent.length + 1} of ${maxAllowedBooks} book(s) used.\n\nWould you like to print the Issue Slip now?`,
-        'success',
-        '🖨️ Print Issue Slip',
-        'Close'
-    );
-
-    if (wantPrint) {
-        openPrintSlipModal(newRecord);
-    }
     return true;
 }
 
@@ -914,7 +970,7 @@ async function processStaffUseBook(e) {
 
     // Record in Ledger
     const ledger = getLedgerData();
-    const staffRecord = {
+    ledger.unshift({
         id: Date.now(),
         rollNo: "STAFF",
         studentName: `Staff: ${staffName}`,
@@ -927,9 +983,10 @@ async function processStaffUseBook(e) {
         allowedDays: 999999,
         returnDate: null,
         status: "Issued (Staff Use)"
-    };
-    ledger.unshift(staffRecord);
+    });
     saveLedgerData(ledger);
+
+    showPopupAlert('✅ STAFF CHECKOUT SUCCESSFUL!', `Staff Member: ${staffName}\nDepartment: ${staffDept}\nBook Title: "${book.title}"\nDate: ${todayStr}\n\n✨ Staff Borrowing Policy:\n• Unlimited Books Allowed (No Quantity Limit)\n• Unlimited Duration (No Due Date / No Fines)\n\nInventory Status is now: OUT OF STOCK (Issued to Staff).`, 'success');
 
     // Reset Form & Hide Modal
     document.getElementById('staffUseForm')?.reset();
@@ -944,18 +1001,6 @@ async function processStaffUseBook(e) {
     if (bookIdInput) {
         bookIdInput.value = bookId;
         handleBookInput(bookId);
-    }
-
-    const wantPrint = await showPopupConfirm(
-        '✅ STAFF CHECKOUT SUCCESSFUL!',
-        `Staff Member: ${staffName}\nDepartment: ${staffDept}\nBook Title: "${book.title}"\nDate: ${todayStr}\n\nInventory Status is now: OUT OF STOCK (Issued to Staff).\n\nWould you like to print the Staff Issue Slip now?`,
-        'success',
-        '🖨️ Print Staff Slip',
-        'Close'
-    );
-
-    if (wantPrint) {
-        openPrintSlipModal(staffRecord);
     }
 
     return true;
@@ -1020,202 +1065,46 @@ async function processReturnBook() {
         saveLedgerData(ledger);
     }
 
-    const returnRecord = record || {
-        id: Date.now(),
-        rollNo: 'N/A',
-        studentName: previousBorrower,
-        classDiv: 'N/A',
-        bookId: bookId,
-        bookTitle: book.title,
-        author: book.author || 'General',
-        issueDate: issueDateStr,
-        dueDate: book.dueDate,
-        returnDate: todayStr,
-        status: "Returned",
-        fineAmount: fineInfo.fineAmount,
-        finePaid: fineCollected
-    };
+    await showPopupAlert('✅ BOOK RETURNED SUCCESSFULLY!', `Book: "${book.title}"\nReturned By: ${previousBorrower}\nReturn Date: ${todayStr}${fineMsg}\n\nInventory Status is now: IN STOCK (Available for re-issue).`, 'success');
+
+    // If fine was collected, offer instant fine slip generation
+    if (fineInfo.overdueDays > 0) {
+        const wantsSlip = await showPopupConfirm(
+            '🖨️ PRINT FINE SLIP RECEIPT?',
+            `Overdue Fine ₹${fineInfo.fineAmount} collected from ${previousBorrower}.\nBook: "${book.title}" (Code: ${bookId})\n\nWould you like to generate and print the Official Library Fine Slip receipt now?`,
+            'info',
+            'Print Fine Slip',
+            'Later'
+        );
+        if (wantsSlip) {
+            openFineSlipModalWithData({
+                receiptNo: 'FS-' + (record?.id ? String(record.id).slice(-6) : Date.now().toString().slice(-6)),
+                bookId: bookId,
+                bookTitle: book.title,
+                author: book.author || record?.author || 'Unknown Author',
+                section: book.sectionName || book.section || 'General',
+                studentName: record ? record.studentName : previousBorrower,
+                rollNo: record ? record.rollNo : 'N/A',
+                classDiv: record ? record.classDiv : (book.classDiv || 'N/A'),
+                issueDate: issueDateStr,
+                dueDate: book.dueDate || record?.dueDate || 'N/A',
+                returnDate: todayStr,
+                allowedDays: allowedDays,
+                overdueDays: fineInfo.overdueDays,
+                fineRate: 5,
+                overdueFine: fineInfo.fineAmount,
+                damageFine: 0,
+                damageReason: 'None Reported (Intact)',
+                fineAmount: fineInfo.fineAmount,
+                finePaid: fineCollected,
+                paymentMode: 'Cash Desk',
+                receiptDate: todayStr
+            });
+        }
+    }
 
     // Refresh preview card
     handleBookInput(bookId);
-
-    const wantPrint = await showPopupConfirm(
-        '✅ BOOK RETURNED SUCCESSFULLY!',
-        `Book: "${book.title}"\nReturned By: ${previousBorrower}\nReturn Date: ${todayStr}${fineMsg}\n\nInventory Status is now: IN STOCK (Available for re-issue).\n\nWould you like to print the Return Receipt Slip now?`,
-        'success',
-        '🖨️ Print Return Slip',
-        'Close'
-    );
-
-    if (wantPrint) {
-        openPrintSlipModal(returnRecord);
-    }
-}
-
-// ==========================================
-// INSTANT BARCODE & DOCUMENT (AAVANAM) AUTO-SCAN SYSTEM
-// ==========================================
-
-// Audio Sound Cue for Barcode Scan
-function playBarcodeScanSound() {
-    try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(1300, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1800, audioCtx.currentTime + 0.08);
-        gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.08);
-    } catch(e){}
-}
-
-let lastScannedBarcode = '';
-let lastScannedTime = 0;
-
-// Universal Instant Barcode / QR Scan Processor
-function processInstantBarcodeScan(scannedCode, source = 'USB QR Reader') {
-    if (!scannedCode) return;
-    const cleanCode = String(scannedCode).trim();
-    if (!cleanCode) return;
-
-    // Hyper-fast 400ms cooldown for identical QR code
-    const now = Date.now();
-    if (cleanCode === lastScannedBarcode && (now - lastScannedTime) < 400) {
-        return;
-    }
-    lastScannedBarcode = cleanCode;
-    lastScannedTime = now;
-
-    // 1. Play Instant Scan Audio Beep
-    playBarcodeScanSound();
-
-    // 2. Flash Webcam Scanner Frame if active
-    const inlineReader = document.getElementById('inlineReader');
-    if (inlineReader) {
-        inlineReader.classList.add('scan-flash-active');
-        setTimeout(() => {
-            inlineReader.classList.remove('scan-flash-active');
-        }, 350);
-    }
-
-    // 3. Document / Book Lookup in Data Store
-    const books = getBooksData();
-    const book = books[cleanCode];
-    const bookTitle = book ? book.title : `Book / Document #${cleanCode}`;
-    const bookAuthor = book ? (book.author || 'Catalog Document') : 'Accession Record';
-    const bookStatus = book ? (book.status || 'Available') : 'Available';
-
-    // 4. Render Floating Instant Scan Toast Banner
-    showInstantBarcodeToast(cleanCode, bookTitle, bookAuthor, bookStatus, source);
-
-    // 5. Auto-Fill Open Library Circulation Station
-    const bookIdInput = document.getElementById('bookIdInput');
-    if (bookIdInput) {
-        bookIdInput.value = cleanCode;
-        handleBookInput(cleanCode);
-
-        // Auto-scroll to preview book card
-        const previewCard = document.getElementById('bookCoverCard');
-        if (previewCard && previewCard.style.display !== 'none') {
-            previewCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    }
-
-    // 6. Auto-Fill Return Modal Input if active
-    const returnInput = document.getElementById('returnBookIdInput') || document.getElementById('returnAccessionInput');
-    if (returnInput) {
-        returnInput.value = cleanCode;
-        if (typeof handleReturnBookLookup === 'function') {
-            handleReturnBookLookup(cleanCode);
-        }
-    }
-
-    // 7. Auto-Fill Book Search Modal Input if active
-    const searchModalInput = document.getElementById('bookCatalogSearchInput');
-    if (searchModalInput) {
-        searchModalInput.value = cleanCode;
-        if (typeof performCatalogSearch === 'function') {
-            performCatalogSearch(cleanCode);
-        }
-    }
-
-    // 8. Auto-Fill Admin Barcode Preview Field if active
-    const adminBarcodeField = document.getElementById('newBookId') || document.getElementById('adminBookSearch');
-    if (adminBarcodeField) {
-        adminBarcodeField.value = cleanCode;
-        if (typeof updateLiveBookBarcodePreview === 'function') {
-            updateLiveBookBarcodePreview();
-        }
-    }
-}
-
-// Render Instant Scanned Toast Notification
-function showInstantBarcodeToast(code, title, author, status, source) {
-    let container = document.getElementById('instantBarcodeToastContainer');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'instantBarcodeToastContainer';
-        container.className = 'instant-barcode-toast-container';
-        document.body.appendChild(container);
-    }
-
-    let statusBadgeClass = 'bg-success';
-    let statusText = 'Available (In Stock)';
-    if (status === 'Admin Hold') {
-        statusBadgeClass = 'bg-danger';
-        statusText = '⛔ Admin Hold';
-    } else if (status === 'Issued') {
-        statusBadgeClass = 'bg-warning text-dark';
-        statusText = '⚠️ Issued';
-    }
-
-    const toastHtml = `
-        <div class="instant-barcode-toast">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="badge bg-primary text-white font-monospace">
-                    <i class="bi bi-qr-code-scan me-1"></i> ${source}
-                </span>
-                <span class="badge ${statusBadgeClass}">${statusText}</span>
-            </div>
-            <div class="d-flex align-items-start gap-2">
-                <div class="bg-primary text-white p-2 rounded-3 fs-4 d-flex align-items-center justify-content-center" style="width:40px; height:40px; min-width:40px;">
-                    <i class="bi bi-qr-code"></i>
-                </div>
-                <div class="flex-grow-1 overflow-hidden">
-                    <div class="fw-bold text-dark text-truncate fs-6">${title}</div>
-                    <div class="small text-muted text-truncate"><i class="bi bi-person me-1"></i>${author} | Accession #${code}</div>
-                </div>
-            </div>
-            <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
-                <small class="text-success fw-bold d-flex align-items-center gap-1">
-                    <i class="bi bi-check-circle-fill"></i> Instant Scan Synced
-                </small>
-                <button type="button" class="btn-close btn-sm" onclick="this.closest('.instant-barcode-toast').remove()"></button>
-            </div>
-        </div>
-    `;
-
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = toastHtml;
-    const toastEl = wrapper.firstElementChild;
-    container.appendChild(toastEl);
-
-    setTimeout(() => {
-        if (toastEl && toastEl.parentNode) {
-            toastEl.style.opacity = '0';
-            toastEl.style.transform = 'translateY(-10px)';
-            toastEl.style.transition = 'all 0.3s ease';
-            setTimeout(() => toastEl.remove(), 300);
-        }
-    }, 4500);
 }
 
 // Entry Mode Switcher (Manual vs Barcode)
@@ -1228,8 +1117,8 @@ function switchEntryMode(mode) {
         if (manualSec) manualSec.style.display = 'none';
         if (barcodeSec) barcodeSec.style.display = 'block';
         if (modeBadge) {
-            modeBadge.className = 'badge bg-primary fs-6 scan-pulse-badge';
-            modeBadge.innerHTML = '<i class="bi bi-qr-code-scan me-1"></i> Mode: QR Code Scanner Active';
+            modeBadge.className = 'badge bg-primary fs-6';
+            modeBadge.innerHTML = '<i class="bi bi-qr-code-scan me-1"></i> Mode: Barcode Scanner Active';
         }
         startInlineScanner();
     } else {
@@ -1253,58 +1142,46 @@ function startInlineScanner() {
         try {
             if (typeof Html5Qrcode !== 'undefined') {
                 if (!inlineQrCode) {
-                    inlineQrCode = new Html5Qrcode("inlineReader", {
-                        verbose: false,
-                        experimentalFeatures: {
-                            useBarCodeDetectorIfSupported: true
-                        }
-                    });
+                    inlineQrCode = new Html5Qrcode("inlineReader");
                 }
-
-                // Square 1:1 ratio qrbox for fast 2D QR Code detection
-                const qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
-                    const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                    const boxSize = Math.floor(minEdge * 0.80);
-                    return { width: Math.max(boxSize, 200), height: Math.max(boxSize, 200) };
-                };
-
                 inlineQrCode.start(
                     { facingMode: "environment" },
-                    { 
-                        fps: 30, 
-                        qrbox: qrboxFunction,
-                        aspectRatio: 1.0,
-                        videoConstraints: {
-                            focusMode: "continuous"
+                    { fps: 10, qrbox: { width: 250, height: 150 } },
+                    (decodedText) => {
+                        const bookIdInput = document.getElementById('bookIdInput');
+                        if (bookIdInput) {
+                            bookIdInput.value = decodedText;
+                            handleBookInput(decodedText);
                         }
                     },
-                    (decodedText) => {
-                        processInstantBarcodeScan(decodedText, 'Camera QR Scanner');
-                    },
-                    () => {}
+                    () => { }
                 ).catch(err => {
                     const errDiv = document.getElementById('inlineScannerError');
                     if (errDiv) {
                         errDiv.style.display = 'block';
-                        errDiv.innerHTML = "<i class='bi bi-info-circle me-1'></i> <strong>Camera scanner notice:</strong> Webcam inactive or permission pending. Hardware USB Barcode/QR Readers scan automatically!";
+                        errDiv.innerText = "Camera notice: Camera not active or permission denied. Hardware USB Barcode Readers work automatically!";
                     }
                 });
             }
-        } catch (e) {}
-    }, 200);
+        } catch (e) { }
+    }, 300);
 }
 
 function stopInlineScanner() {
     if (inlineQrCode && inlineQrCode.isScanning) {
-        inlineQrCode.stop().catch(e => {});
+        inlineQrCode.stop().catch(e => { });
     }
 }
 
 function simulateScan(code) {
-    processInstantBarcodeScan(code, 'Simulated Scan');
+    const bookIdInput = document.getElementById('bookIdInput');
+    if (bookIdInput) {
+        bookIdInput.value = code;
+        handleBookInput(code);
+    }
 }
 
-// Hardware USB / Bluetooth Barcode Scanner Keystroke Listener
+// Hardware USB / Bluetooth Barcode Device Listener
 let barcodeBuffer = '';
 let barcodeTimeout = null;
 
@@ -1314,32 +1191,31 @@ document.addEventListener('keydown', (e) => {
 
     if (isSpecialInput) return;
 
-    // F2 Shortcut for Instant Barcode Scan Trigger
-    if (e.key === 'F2') {
-        e.preventDefault();
-        const modeBarcodeRadio = document.getElementById('modeBarcode');
-        if (modeBarcodeRadio) {
-            modeBarcodeRadio.checked = true;
-            switchEntryMode('barcode');
-        }
-        return;
-    }
-
     if (e.key === 'Enter') {
-        if (barcodeBuffer.length >= 1) {
+        if (barcodeBuffer.length >= 2) {
             const scannedCode = barcodeBuffer.trim();
+            const bookIdInput = document.getElementById('bookIdInput');
+            if (bookIdInput) {
+                bookIdInput.value = scannedCode;
+                handleBookInput(scannedCode);
+
+                const scannerNotice = document.getElementById('hardwareScannerNotice');
+                if (scannerNotice) {
+                    scannerNotice.style.display = 'block';
+                    scannerNotice.innerHTML = `<i class="bi bi-upc-scan me-1"></i> <strong>USB Barcode Device Detected:</strong> Scanned Code #${scannedCode}`;
+                    setTimeout(() => { scannerNotice.style.display = 'none'; }, 4000);
+                }
+            }
             barcodeBuffer = '';
-            processInstantBarcodeScan(scannedCode, 'USB Barcode Reader');
         }
     } else if (e.key.length === 1) {
         barcodeBuffer += e.key;
         clearTimeout(barcodeTimeout);
         barcodeTimeout = setTimeout(() => {
             barcodeBuffer = '';
-        }, 250);
+        }, 200);
     }
 });
-
 
 // Populate class filter dropdowns dynamically
 function populateClassFilterDropdowns() {
@@ -1354,7 +1230,7 @@ function populateClassFilterDropdowns() {
     try {
         const raw = localStorage.getItem('libraryStudents');
         if (raw) students = JSON.parse(raw);
-    } catch(e){}
+    } catch (e) { }
 
     const classSet = new Set();
     const customClasses = getClassesData();
@@ -1371,7 +1247,7 @@ function populateClassFilterDropdowns() {
         const isFilterSelect = selectEl.id !== 'newStudentClassSelect';
 
         let optionsHtml = isFilterSelect ? `<option value="all">🎓 All Classes & Divisions</option>` : `<option value="">-- Select Class / Division --</option>`;
-        
+
         sortedClasses.forEach(cls => {
             optionsHtml += `<option value="${cls}">${cls}</option>`;
         });
@@ -1388,7 +1264,7 @@ function exportClassBasedLedger() {
     const classVal = document.getElementById('ledgerClassFilter')?.value || 'all';
 
     const filtered = ledger.filter(item => {
-        const matchesSearch = !searchVal || 
+        const matchesSearch = !searchVal ||
             item.studentName.toLowerCase().includes(searchVal) ||
             item.rollNo.toString().includes(searchVal) ||
             item.bookTitle.toLowerCase().includes(searchVal) ||
@@ -1399,13 +1275,13 @@ function exportClassBasedLedger() {
         const fineInfo = calculateOverdueFine(item.issueDate, allowedDays, 5, isStaffItem);
         const isOverdue = item.status.includes('Issued') && fineInfo.overdueDays > 0;
 
-        const matchesFilter = filterVal === 'all' || 
+        const matchesFilter = filterVal === 'all' ||
             (filterVal === 'issued' && item.status.includes('Issued')) ||
             (filterVal === 'overdue' && isOverdue) ||
             (filterVal === 'staff' && (item.rollNo === 'STAFF' || item.status.includes('Staff'))) ||
             (filterVal === 'returned' && item.status === 'Returned');
 
-        const matchesClass = classVal === 'all' || 
+        const matchesClass = classVal === 'all' ||
             (item.classDiv && item.classDiv.toLowerCase() === classVal.toLowerCase());
 
         return matchesSearch && matchesFilter && matchesClass;
@@ -1455,7 +1331,7 @@ function renderLedgerTable() {
     const classVal = document.getElementById('ledgerClassFilter')?.value || 'all';
 
     let filtered = ledger.filter(item => {
-        const matchesSearch = !searchVal || 
+        const matchesSearch = !searchVal ||
             item.studentName.toLowerCase().includes(searchVal) ||
             item.rollNo.toString().includes(searchVal) ||
             item.bookTitle.toLowerCase().includes(searchVal) ||
@@ -1466,13 +1342,13 @@ function renderLedgerTable() {
         const fineInfo = calculateOverdueFine(item.issueDate, allowedDays, 5, isStaffItem);
         const isOverdue = item.status.includes('Issued') && fineInfo.overdueDays > 0;
 
-        const matchesFilter = filterVal === 'all' || 
+        const matchesFilter = filterVal === 'all' ||
             (filterVal === 'issued' && item.status.includes('Issued')) ||
             (filterVal === 'overdue' && isOverdue) ||
             (filterVal === 'staff' && (item.rollNo === 'STAFF' || item.status.includes('Staff'))) ||
             (filterVal === 'returned' && item.status === 'Returned');
 
-        const matchesClass = classVal === 'all' || 
+        const matchesClass = classVal === 'all' ||
             (item.classDiv && item.classDiv.toLowerCase() === classVal.toLowerCase());
 
         return matchesSearch && matchesFilter && matchesClass;
@@ -1501,9 +1377,26 @@ function renderLedgerTable() {
             statusBadgeHtml = `<span class="badge bg-primary"><i class="bi bi-clock me-1"></i> Out of Stock (Issued)</span>`;
         }
 
-        const dueDateDisplay = isStaffUse 
-            ? `<span class="badge bg-info text-white"><i class="bi bi-infinity me-1"></i>Unlimited Duration</span>` 
-            : (item.dueDate ? `${item.dueDate} (${allowedDays/7} wk)` : (allowedDays ? `${allowedDays} Days` : '-'));
+        const dueDateDisplay = isStaffUse
+            ? `<span class="badge bg-info text-white"><i class="bi bi-infinity me-1"></i>Unlimited Duration</span>`
+            : (item.dueDate ? `${item.dueDate} (${allowedDays / 7} wk)` : (allowedDays ? `${allowedDays} Days` : '-'));
+
+        // Fine Slip button with contextual styling
+        let slipBtnHtml = '';
+        const recordKey = item.id || item.bookId || index;
+        if (isReturned && item.fineAmount > 0) {
+            slipBtnHtml = `<button class="btn btn-sm btn-outline-success fw-bold shadow-sm py-1 px-2" onclick="openFineSlipByLedgerId('${recordKey}')" title="Print Fine Receipt (Paid)">
+                <i class="bi bi-receipt me-1"></i> Slip (₹${item.fineAmount})
+            </button>`;
+        } else if (fineInfo.overdueDays > 0) {
+            slipBtnHtml = `<button class="btn btn-sm btn-danger fw-bold shadow-sm py-1 px-2" onclick="openFineSlipByLedgerId('${recordKey}')" title="Generate Overdue Fine Slip">
+                <i class="bi bi-receipt me-1"></i> Slip (₹${fineInfo.fineAmount})
+            </button>`;
+        } else {
+            slipBtnHtml = `<button class="btn btn-sm btn-outline-secondary py-1 px-2" onclick="openFineSlipByLedgerId('${recordKey}')" title="View / Generate Slip">
+                <i class="bi bi-receipt me-1"></i> Slip
+            </button>`;
+        }
 
         return `
             <tr>
@@ -1515,242 +1408,10 @@ function renderLedgerTable() {
                 <td>${item.issueDate}</td>
                 <td><small class="fw-bold text-secondary">${dueDateDisplay}</small></td>
                 <td>${statusBadgeHtml}</td>
-                <td class="text-center">
-                    <button type="button" class="btn btn-sm btn-outline-primary fw-bold py-1 px-2.5 shadow-sm" onclick="printLedgerSlip('${item.id}')" title="Print Issue / Return Slip Receipt">
-                        <i class="bi bi-printer-fill me-1"></i> Slip
-                    </button>
-                </td>
+                <td class="text-center">${slipBtnHtml}</td>
             </tr>
         `;
     }).join('');
-}
-
-// ==========================================
-// PRINT SLIP TRANSACTION RECEIPT ENGINE
-// ==========================================
-
-function renderPrintSlipHTML(item) {
-    if (!item) return '';
-
-    const isStaffUse = item.rollNo === 'STAFF' || (item.status && item.status.includes('Staff'));
-    const isReturned = item.status === 'Returned';
-    const booksObj = getBooksData();
-    const categoriesObj = getCategoriesData();
-    const bookInfo = booksObj[item.bookId] || {};
-    
-    const author = item.author || bookInfo.author || 'Unknown Author';
-    const section = item.section || bookInfo.sectionName || categoriesObj[bookInfo.section] || bookInfo.section || 'General Section';
-    const logoUrl = getCollegeLogoUrl();
-    const printDateStr = new Date().toLocaleString('en-IN', {
-        day: '2-digit', month: 'short', year: 'numeric',
-        hour: '2-digit', minute: '2-digit', hour12: true
-    }).toUpperCase();
-
-    const pnrNo = `PNR-${String(item.id || Date.now()).slice(-8)}`;
-    const ticketClass = isStaffUse ? 'FACULTY PASS' : 'STUDENT CLASS';
-    const txnType = isReturned ? 'RETURN CLEARANCE' : 'BOOK ISSUE PASS';
-
-    const fineText = (isReturned && item.fineAmount > 0) 
-        ? `RS. ${item.fineAmount}.00 (PAID)`
-        : ((!isReturned && !isStaffUse && item.issueDate) 
-            ? `RS. 5.00 / DAY OVERDUE` 
-            : `RS. 0.00 [CLEAR]`);
-
-    const qrCodeSvg = (typeof renderBookBarcode === 'function') 
-        ? renderBookBarcode(item.bookId || '000', { height: 72, fontSize: 8 }) 
-        : `<div class="font-monospace fw-bold">${item.bookId}</div>`;
-
-    return `
-        <div class="train-ticket-wrapper">
-            <div class="train-ticket-card">
-                
-                <!-- Ticket Top Banner Header -->
-                <div class="ticket-header-ribbon">
-                    <div class="d-flex align-items-center gap-2">
-                        <img src="${logoUrl}" alt="Logo" class="ticket-logo-img" onerror="this.onerror=null;this.style.display='none'">
-                        <div>
-                            <div class="ticket-title-main">KUTHBUKHANA ANWARIYYA TRANSIT PASS</div>
-                            <div class="ticket-sub-title">DEPARTMENT OF LIBRARY CIRCULATION SERVICES</div>
-                        </div>
-                    </div>
-                    <div class="ticket-pnr-box text-end">
-                        <div class="ticket-pnr-label">TICKET PNR / NO:</div>
-                        <div class="ticket-pnr-val">${pnrNo}</div>
-                    </div>
-                </div>
-
-                <!-- Main Ticket Body (Split Layout: Journey Data + QR Verification Stub) -->
-                <div class="ticket-body-grid">
-                    
-                    <!-- Left Section: Transit & Passenger Particulars -->
-                    <div class="ticket-main-section">
-                        
-                        <!-- Row 1: Dates & Class -->
-                        <div class="ticket-data-row">
-                            <div class="ticket-field">
-                                <span class="t-label">ISSUE DATE/TIME:</span>
-                                <span class="t-val fw-bold">${printDateStr}</span>
-                            </div>
-                            <div class="ticket-field">
-                                <span class="t-label">${isReturned ? 'RETURN DATE:' : 'VALID UPTO / DUE:'}</span>
-                                <span class="t-val fw-bold ${isReturned ? 'text-success' : 'text-danger'}">${isReturned ? (item.returnDate || 'RETURNED') : (item.dueDate || 'UNLIMITED')}</span>
-                            </div>
-                            <div class="ticket-field">
-                                <span class="t-label">CLASS / TYPE:</span>
-                                <span class="t-val fw-bold">${ticketClass}</span>
-                            </div>
-                        </div>
-
-                        <!-- Row 2: Borrower Passenger Info -->
-                        <div class="ticket-data-row highlight-bg">
-                            <div class="ticket-field flex-2">
-                                <span class="t-label">PASSENGER / BORROWER:</span>
-                                <span class="t-val fw-bold fs-6">${(item.studentName || 'N/A').toUpperCase()}</span>
-                            </div>
-                            <div class="ticket-field">
-                                <span class="t-label">REG / ROLL NO:</span>
-                                <span class="t-val font-monospace fw-bold">${item.rollNo || '-'}</span>
-                            </div>
-                            <div class="ticket-field">
-                                <span class="t-label">CLASS / DEPT:</span>
-                                <span class="t-val">${(item.classDiv || (isStaffUse ? 'STAFF DEPT' : 'GENERAL')).toUpperCase()}</span>
-                            </div>
-                        </div>
-
-                        <!-- Row 3: Publication / Book Details -->
-                        <div class="ticket-data-row">
-                            <div class="ticket-field flex-2">
-                                <span class="t-label">BOOK ACCESSION & TITLE:</span>
-                                <span class="t-val fw-bold text-primary">[#${item.bookId}] ${(item.bookTitle || 'LIBRARY BOOK').toUpperCase()}</span>
-                            </div>
-                            <div class="ticket-field">
-                                <span class="t-label">AUTHOR:</span>
-                                <span class="t-val">${author.toUpperCase()}</span>
-                            </div>
-                        </div>
-
-                        <!-- Row 4: Route / Station & Charges -->
-                        <div class="ticket-data-row">
-                            <div class="ticket-field">
-                                <span class="t-label">FROM STATION:</span>
-                                <span class="t-val">CENTRAL LIBRARY</span>
-                            </div>
-                            <div class="ticket-field">
-                                <span class="t-label">TRANSIT STATUS:</span>
-                                <span class="t-val fw-bold text-success">${txnType}</span>
-                            </div>
-                            <div class="ticket-field">
-                                <span class="t-label">FARE / FINE CHARGE:</span>
-                                <span class="t-val fw-bold">${fineText}</span>
-                            </div>
-                        </div>
-
-                        <div class="ticket-footer-text">
-                            *** WISHING YOU A HAPPY TRANSIT & ENRICHING READING JOURNEY! PLEASE RETAIN PASS ***
-                        </div>
-
-                    </div>
-
-                    <!-- Right Section: Verification Stub with Cut Line & QR Code -->
-                    <div class="ticket-stub-section">
-                        <div class="stub-notch-top"></div>
-                        <div class="stub-header">VERIFICATION STUB</div>
-                        <div class="stub-qr-box my-1">
-                            ${qrCodeSvg}
-                        </div>
-                        <div class="stub-acc-id">ID: #${item.bookId}</div>
-                        <div class="stub-seal-text">OFFICIALLY ISSUED</div>
-                        <div class="stub-notch-bottom"></div>
-                    </div>
-
-                </div>
-
-            </div>
-        </div>
-    `;
-}
-
-function openPrintSlipModal(item) {
-    if (!item) return;
-
-    let modalOverlay = document.getElementById('printSlipModalOverlay');
-    if (!modalOverlay) {
-        modalOverlay = document.createElement('div');
-        modalOverlay.id = 'printSlipModalOverlay';
-        modalOverlay.className = 'custom-modal-overlay';
-        modalOverlay.style.zIndex = '999999';
-        document.body.appendChild(modalOverlay);
-    }
-
-    const slipContent = renderPrintSlipHTML(item);
-
-    modalOverlay.innerHTML = `
-        <div class="custom-modal-box" style="max-width: 680px; width: 95%;">
-            <div class="custom-modal-header bg-primary text-white p-3 rounded-top d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-printer-fill fs-4"></i>
-                    <h5 class="fw-bold mb-0 text-white">Library Transaction Print Slip</h5>
-                </div>
-                <button type="button" class="btn-close btn-close-white" onclick="closePrintSlipModal()"></button>
-            </div>
-            <div class="custom-modal-body p-3 bg-light" style="max-height: 75vh; overflow-y: auto;">
-                ${slipContent}
-            </div>
-            <div class="custom-modal-footer bg-white p-3 d-flex justify-content-between align-items-center border-top">
-                <button type="button" class="btn btn-secondary fw-semibold" onclick="closePrintSlipModal()">Close</button>
-                <button type="button" class="btn btn-success fw-bold px-4 shadow-sm" onclick="executePrintSlipFromModal()">
-                    <i class="bi bi-printer-fill me-1"></i> Print Slip / Save PDF
-                </button>
-            </div>
-        </div>
-    `;
-
-    window._activePrintSlipItem = item;
-    modalOverlay.classList.add('active');
-}
-
-function closePrintSlipModal() {
-    const modalOverlay = document.getElementById('printSlipModalOverlay');
-    if (modalOverlay) {
-        modalOverlay.classList.remove('active');
-    }
-}
-
-function executePrintSlipFromModal() {
-    const item = window._activePrintSlipItem;
-    if (!item) return;
-
-    let printArea = document.getElementById('printableSlipArea');
-    if (!printArea) {
-        printArea = document.createElement('div');
-        printArea.id = 'printableSlipArea';
-        document.body.appendChild(printArea);
-    }
-
-    printArea.innerHTML = renderPrintSlipHTML(item);
-
-    setTimeout(() => {
-        window.print();
-    }, 200);
-}
-
-function printLedgerSlip(recordId) {
-    const ledger = getLedgerData();
-    const item = ledger.find(r => String(r.id) === String(recordId));
-    if (!item) {
-        showPopupAlert('Record Not Found', 'Could not find transaction record for printing slip!', 'warning');
-        return;
-    }
-    openPrintSlipModal(item);
-}
-
-function printLastTransactionSlip() {
-    const ledger = getLedgerData();
-    if (!ledger || ledger.length === 0) {
-        showPopupAlert('No Transactions', 'No circulation transaction records found to print slip!', 'warning');
-        return;
-    }
-    openPrintSlipModal(ledger[0]);
 }
 
 // Auto-initialize ledger table and student lookup on load
@@ -1785,18 +1446,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const studentsData = localStorage.getItem('libraryStudents');
             if (studentsData) {
                 const students = JSON.parse(studentsData);
-                const matched = students.find(s => 
-                    String(s.rollNo || s.EnrollNo || '').toLowerCase() === val.toLowerCase() ||
-                    String(s.applicationId || '').toLowerCase() === val.toLowerCase()
-                );
+                const matched = students.find(s => String(s.rollNo) === String(val));
                 if (matched) {
                     const nameInput = document.getElementById('studentNameInput');
                     const classInput = document.getElementById('classDivInput');
-                    if (nameInput) nameInput.value = matched.name || matched.Name || matched.studentName || '';
-                    if (classInput) {
-                        const classVal = matched.classDiv || matched.class || (matched.Course ? `${matched.Course}${matched.CurrentYear ? ' (' + matched.CurrentYear + 'Yr)' : ''}` : 'Shareeath');
-                        classInput.value = classVal;
-                    }
+                    if (nameInput) nameInput.value = matched.name;
+                    if (classInput) classInput.value = matched.classDiv || '10-A';
                 }
             }
         });
@@ -1868,7 +1523,7 @@ function showPopupAlert(title, message, type = 'info', icon = null) {
         if (confirmBtn) {
             confirmBtn.className = `custom-modal-btn custom-modal-btn-confirm-${typeClass}`;
             confirmBtn.innerHTML = `<i class="bi bi-check-lg"></i> OK`;
-            
+
             const handleConfirm = () => {
                 confirmBtn.removeEventListener('click', handleConfirm);
                 overlay.classList.remove('active');
@@ -1936,259 +1591,81 @@ function showPopupConfirm(title, message, type = 'warning', confirmText = 'Confi
 // ==========================================
 
 const CODE128_PATTERNS = [
-    '212222','222122','222221','121223','121322','131222','122213','122312','132212','221213',
-    '221312','231212','112232','122132','122231','113222','123122','123221','223211','221132',
-    '221231','213212','223112','312131','311222','321122','321221','312212','322112','322211',
-    '212123','212321','212321','111323','131123','131321','112313','132113','132311','211313',
-    '231113','231311','112133','112331','132131','113123','113321','133121','313121','211331',
-    '231131','213113','213311','213131','311123','311321','331121','312113','312311','332111',
-    '314111','221411','411131','111224','111422','121124','121421','141122','141221','112214',
-    '112412','122114','122411','142112','142211','241211','221114','411122','134111','111242',
-    '121142','121241','114212','124112','124211','411212','421112','421211','212141','214121',
-    '412121','111143','111341','131141','114113','114311','411113','411311','113141','114131',
-    '311141','411131','211412','211214','211232','233111','2331112'
+    '212222', '222122', '222221', '121223', '121322', '131222', '122213', '122312', '132212', '221213',
+    '221312', '231212', '112232', '122132', '122231', '113222', '123122', '123221', '223211', '221132',
+    '221231', '213212', '223112', '312131', '311222', '321122', '321221', '312212', '322112', '322211',
+    '212123', '212321', '212321', '111323', '131123', '131321', '112313', '132113', '132311', '211313',
+    '231113', '231311', '112133', '112331', '132131', '113123', '113321', '133121', '313121', '211331',
+    '231131', '213113', '213311', '213131', '311123', '311321', '331121', '312113', '312311', '332111',
+    '314111', '221411', '411131', '111224', '111422', '121124', '121421', '141122', '141221', '112214',
+    '112412', '122114', '122411', '142112', '142211', '241211', '221114', '411122', '134111', '111242',
+    '121142', '121241', '114212', '124112', '124211', '411212', '421112', '421211', '212141', '214121',
+    '412121', '111143', '111341', '131141', '114113', '114311', '411113', '411311', '113141', '114131',
+    '311141', '411131', '211412', '211214', '211232', '233111', '2331112'
 ];
 
-// ==========================================
-// PURE SVG 2D QR CODE GENERATOR FOR BOOK ACCESSIONS
-// ==========================================
-
-function calcReedSolomonECC(dataBytes, eccCount) {
-    const gfExp = new Uint8Array(512);
-    const gfLog = new Uint8Array(256);
-    let x = 1;
-    for (let i = 0; i < 255; i++) {
-        gfExp[i] = x;
-        gfExp[i + 255] = x;
-        gfLog[x] = i;
-        x <<= 1;
-        if (x & 256) x ^= 285;
-    }
-
-    function gfMul(a, b) {
-        if (a === 0 || b === 0) return 0;
-        return gfExp[gfLog[a] + gfLog[b]];
-    }
-
-    let gen = [1];
-    for (let i = 0; i < eccCount; i++) {
-        const nextGen = new Array(gen.length + 1).fill(0);
-        for (let j = 0; j < gen.length; j++) {
-            nextGen[j] ^= gfMul(gen[j], gfExp[i]);
-            nextGen[j + 1] ^= gen[j];
-        }
-        gen = nextGen;
-    }
-
-    const res = new Array(eccCount).fill(0);
-    for (const b of dataBytes) {
-        const factor = b ^ res[0];
-        res.shift();
-        res.push(0);
-        for (let i = 0; i < eccCount; i++) {
-            res[i] ^= gfMul(gen[i], factor);
-        }
-    }
-    return res;
-}
-
-function buildQRMatrix(text) {
-    const len = text.length;
-    let version = 1;
-    if (len > 14) version = 2;
-    if (len > 26) version = 3;
-    const N = 17 + version * 4;
-
-    const matrix = Array.from({ length: N }, () => Array(N).fill(false));
-    const isReserved = Array.from({ length: N }, () => Array(N).fill(false));
-
-    function markReserved(r, c, val) {
-        matrix[r][c] = val;
-        isReserved[r][c] = true;
-    }
-
-    // Finder Patterns
-    function addFinder(topR, topC) {
-        for (let r = -1; r <= 7; r++) {
-            for (let c = -1; c <= 7; c++) {
-                const mr = topR + r;
-                const mc = topC + c;
-                if (mr >= 0 && mr < N && mc >= 0 && mc < N) {
-                    let isBlack = false;
-                    if (r >= 0 && r <= 6 && c >= 0 && c <= 6) {
-                        if (r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4)) {
-                            isBlack = true;
-                        }
-                    }
-                    markReserved(mr, mc, isBlack);
-                }
-            }
-        }
-    }
-
-    addFinder(0, 0);
-    addFinder(0, N - 7);
-    addFinder(N - 7, 0);
-
-    if (version >= 2) {
-        const alignPos = version === 2 ? 18 : 22;
-        for (let r = -2; r <= 2; r++) {
-            for (let c = -2; c <= 2; c++) {
-                const isBlack = (Math.abs(r) === 2 || Math.abs(c) === 2 || (r === 0 && c === 0));
-                markReserved(alignPos + r, alignPos + c, isBlack);
-            }
-        }
-    }
-
-    for (let i = 8; i < N - 8; i++) {
-        if (!isReserved[6][i]) markReserved(6, i, i % 2 === 0);
-        if (!isReserved[i][6]) markReserved(i, 6, i % 2 === 0);
-    }
-    markReserved(N - 8, 8, true);
-
-    for (let i = 0; i < 9; i++) {
-        if (!isReserved[8][i]) isReserved[8][i] = true;
-        if (!isReserved[i][8]) isReserved[i][8] = true;
-        if (!isReserved[8][N - 1 - i]) isReserved[8][N - 1 - i] = true;
-        if (!isReserved[N - 1 - i][8]) isReserved[N - 1 - i][8] = true;
-    }
-
-    const bits = [0, 1, 0, 0];
-    const countBits = (version <= 9) ? 8 : 16;
-    for (let i = countBits - 1; i >= 0; i--) {
-        bits.push((len >> i) & 1);
-    }
-    for (let i = 0; i < len; i++) {
-        const code = text.charCodeAt(i);
-        for (let b = 7; b >= 0; b--) {
-            bits.push((code >> b) & 1);
-        }
-    }
-    while (bits.length % 8 !== 0) bits.push(0);
-
-    const capacityBytes = version === 1 ? 16 : (version === 2 ? 28 : 44);
-    const dataBytes = [];
-    for (let i = 0; i < bits.length; i += 8) {
-        let byteVal = 0;
-        for (let b = 0; b < 8; b++) {
-            byteVal = (byteVal << 1) | (bits[i + b] || 0);
-        }
-        dataBytes.push(byteVal);
-    }
-    const padPatterns = [236, 17];
-    let padIdx = 0;
-    while (dataBytes.length < capacityBytes) {
-        dataBytes.push(padPatterns[padIdx]);
-        padIdx = (padIdx + 1) % 2;
-    }
-
-    const eccCount = version === 1 ? 10 : (version === 2 ? 16 : 26);
-    const eccBytes = calcReedSolomonECC(dataBytes, eccCount);
-    const finalCodewords = [...dataBytes, ...eccBytes];
-
-    const allBits = [];
-    for (const byteVal of finalCodewords) {
-        for (let b = 7; b >= 0; b--) {
-            allBits.push((byteVal >> b) & 1);
-        }
-    }
-
-    let bitIdx = 0;
-    let right = N - 1;
-    let dir = -1;
-
-    while (right > 0) {
-        if (right === 6) right--;
-        const col1 = right;
-        const col2 = right - 1;
-        const rowStart = (dir === -1) ? N - 1 : 0;
-        const rowEnd = (dir === -1) ? -1 : N;
-
-        for (let r = rowStart; r !== rowEnd; r += dir) {
-            for (const c of [col1, col2]) {
-                if (!isReserved[r][c]) {
-                    const bit = bitIdx < allBits.length ? allBits[bitIdx++] : 0;
-                    matrix[r][c] = bit === 1;
-                }
-            }
-        }
-        dir = -dir;
-        right -= 2;
-    }
-
-    for (let r = 0; r < N; r++) {
-        for (let c = 0; c < N; c++) {
-            if (!isReserved[r][c]) {
-                if ((r + c) % 2 === 0) {
-                    matrix[r][c] = !matrix[r][c];
-                }
-            }
-        }
-    }
-
-    const formatBits = [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0];
-    const fmtCoords1 = [
-        [8, 0], [8, 1], [8, 2], [8, 3], [8, 4], [8, 5], [8, 7], [8, 8],
-        [7, 8], [5, 8], [4, 8], [3, 8], [2, 8], [1, 8], [0, 8]
-    ];
-    const fmtCoords2 = [
-        [N - 1, 8], [N - 2, 8], [N - 3, 8], [N - 4, 8], [N - 5, 8], [N - 6, 8], [N - 7, 8],
-        [8, N - 8], [8, N - 7], [8, N - 6], [8, N - 5], [8, N - 4], [8, N - 3], [8, N - 2], [8, N - 1]
-    ];
-    for (let i = 0; i < 15; i++) {
-        const val = formatBits[i] === 1;
-        matrix[fmtCoords1[i][0]][fmtCoords1[i][1]] = val;
-        matrix[fmtCoords2[i][0]][fmtCoords2[i][1]] = val;
-    }
-
-    return matrix;
-}
-
-function generateQRCodeSVG(text, options = {}) {
-    const str = String(text || '').trim();
-    if (!str) return '<svg width="0" height="0"></svg>';
-    const size = options.size || options.height || 70;
-    const displayValue = options.displayValue !== false;
-
-    const qrMatrix = buildQRMatrix(str);
-    const numModules = qrMatrix.length;
-    const margin = 2;
-    const viewBoxSize = numModules + margin * 2;
-
-    let pathD = '';
-    for (let r = 0; r < numModules; r++) {
-        for (let c = 0; c < numModules; c++) {
-            if (qrMatrix[r][c]) {
-                const x = c + margin;
-                const y = r + margin;
-                pathD += `M${x},${y}h1v1h-1z `;
-            }
-        }
-    }
-
-    const totalSvgHeight = viewBoxSize + (displayValue ? 3.5 : 0);
-
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${viewBoxSize} ${totalSvgHeight}" width="${size}" height="${displayValue ? Math.round(size * 1.15) : size}" class="book-qr-code-svg">
-        <rect width="100%" height="100%" fill="#ffffff" rx="1"/>
-        <path d="${pathD}" fill="#0f172a" />
-        ${displayValue ? `<text x="${viewBoxSize / 2}" y="${viewBoxSize + 2.8}" font-family="Consolas, monospace" font-size="2.4" font-weight="bold" text-anchor="middle" fill="#0284c7" letter-spacing="0.2px">${str}</text>` : ''}
-    </svg>`;
-}
-
 /**
- * Generate pure 2D SVG QR Code string for any book code ID.
+ * Generate pure SVG Code 128 barcode string for any book code ID.
  */
 function renderBookBarcode(codeText, options = {}) {
-    const height = options.height || options.size || 70;
+    const height = options.height || 30;
+    const widthModule = options.width || 1.2;
     const displayValue = options.displayValue !== false;
+    const fontSize = options.fontSize || 9;
 
     const str = String(codeText || '').trim();
     if (!str) return '<svg width="0" height="0"></svg>';
 
-    return generateQRCodeSVG(str, {
-        size: height,
-        displayValue: displayValue
-    });
+    let checksum = 104; // Start B Code128
+    const symbolIndices = [104];
+
+    for (let i = 0; i < str.length; i++) {
+        const code = str.charCodeAt(i) - 32;
+        const val = (code >= 0 && code <= 95) ? code : 0;
+        symbolIndices.push(val);
+        checksum += val * (i + 1);
+    }
+
+    checksum = checksum % 103;
+    symbolIndices.push(checksum);
+    symbolIndices.push(106); // Stop symbol
+
+    let modules = '';
+    for (const idx of symbolIndices) {
+        modules += CODE128_PATTERNS[idx] || CODE128_PATTERNS[0];
+    }
+
+    let totalModules = 0;
+    for (let i = 0; i < modules.length; i++) {
+        totalModules += parseInt(modules[i], 10);
+    }
+
+    const quietZone = 6;
+    const svgWidth = Math.ceil((totalModules * widthModule) + (quietZone * 2));
+    const svgHeight = height + (displayValue ? fontSize + 4 : 0);
+
+    let x = quietZone;
+    let rects = '';
+    let isBar = true;
+
+    for (let i = 0; i < modules.length; i++) {
+        const w = parseInt(modules[i], 10) * widthModule;
+        if (isBar) {
+            rects += `<rect x="${x.toFixed(2)}" y="0" width="${w.toFixed(2)}" height="${height}" fill="#0f172a" />`;
+        }
+        x += w;
+        isBar = !isBar;
+    }
+
+    let textSvg = '';
+    if (displayValue) {
+        textSvg = `<text x="${(svgWidth / 2).toFixed(2)}" y="${(height + fontSize + 1).toFixed(2)}" font-family="Consolas, monospace" font-size="${fontSize}" font-weight="bold" text-anchor="middle" fill="#0284c7" letter-spacing="1px">${str}</text>`;
+    }
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgWidth} ${svgHeight}" width="${svgWidth}" height="${svgHeight}" class="book-barcode-svg">
+        ${rects}
+        ${textSvg}
+    </svg>`;
 }
 
 /**
@@ -2233,10 +1710,10 @@ function renderBookBarcodeLabelCard(b) {
                 <div class="barcode-address-line font-monospace">679335</div>
             </div>
 
-            <!-- Right Column: White Barcode Stamp Box -->
+            <!-- Right Column: White Barcode Box -->
             <div class="barcode-stamp-box">
                 <div class="barcode-stamp-title" title="${bookTitle.replace(/"/g, '&quot;')}">${bookTitle}</div>
-                <div class="barcode-stamp-svg">${renderBookBarcode(bookId, { height: 48, fontSize: 8 })}</div>
+                <div class="barcode-stamp-svg">${renderBookBarcode(bookId, { height: 26, fontSize: 8 })}</div>
                 <div class="barcode-stamp-id">ID: ${bookId} | ${bookSection}</div>
             </div>
         </div>
@@ -2278,7 +1755,7 @@ function printBarcodeLabels(bookList = []) {
 function openBookSearchModal() {
     populateModalCategoryDropdown();
     renderModalBookSearchResults();
-    
+
     const modalEl = document.getElementById('searchBooksModal');
     if (modalEl && typeof bootstrap !== 'undefined') {
         const instance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
@@ -2306,7 +1783,7 @@ function populateModalCategoryDropdown() {
     const select = document.getElementById('modalCategoryFilter');
     if (!select) return;
     const categories = getCategoriesData();
-    
+
     let html = '<option value="">All Categories</option>';
     for (const [code, name] of Object.entries(categories)) {
         html += `<option value="${code}">[${code}] ${name}</option>`;
@@ -2345,7 +1822,7 @@ function renderModalBookSearchResults() {
 
     // Filter books
     const filtered = booksList.filter(book => {
-        const matchesQuery = !query || 
+        const matchesQuery = !query ||
             book.id.toLowerCase().includes(query) ||
             (book.title && book.title.toLowerCase().includes(query)) ||
             (book.author && book.author.toLowerCase().includes(query)) ||
@@ -2378,7 +1855,7 @@ function renderModalBookSearchResults() {
     filtered.forEach(book => {
         const coverSrc = book.cover || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80';
         const sectionName = book.sectionName || categoriesObj[book.section] || book.section || 'General';
-        
+
         let statusBadge = '';
         if (book.status === 'Admin Hold' || book.issuedTo === 'Admin Hold') {
             statusBadge = `<span class="badge bg-danger"><i class="bi bi-shield-lock-fill me-1"></i>Admin Hold</span>`;
@@ -2475,11 +1952,11 @@ async function searchOpenLibraryAPI() {
             const firstPublish = doc.first_publish_year ? `First published: ${doc.first_publish_year}` : '';
             const isbn = (doc.isbn && doc.isbn.length > 0) ? doc.isbn[0] : '';
             const coverId = doc.cover_i;
-            const coverUrl = coverId 
+            const coverUrl = coverId
                 ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg`
                 : (isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg` : 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80');
 
-            const bookCode = isbn || (doc.key ? doc.key.replace('/works/', '') : '') || `OL-${Math.floor(Math.random()*10000)}`;
+            const bookCode = isbn || (doc.key ? doc.key.replace('/works/', '') : '') || `OL-${Math.floor(Math.random() * 10000)}`;
             const safeTitle = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
             const safeAuthor = author.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
@@ -2645,7 +2122,7 @@ function generateCustomExportData() {
             const allowedDays = item.allowedDays || (getClassGradeNum(item.classDiv) >= 6 ? 10 : 5);
             const fineInfo = calculateOverdueFine(item.issueDate, allowedDays, 5, isStaffItem);
             const isIssued = item.status.includes('Issued');
-            
+
             return {
                 barcode: item.bookId || '',
                 title: item.bookTitle || bookInfo.title || 'Untitled',
@@ -2846,4 +2323,1218 @@ function downloadExportFile(content, fileName, mimeType) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+// ==========================================
+// OFFICIAL LIBRARY FINE SLIP & RECEIPT ENGINE
+// ==========================================
+
+// Global state holding current fine slip data
+let currentActiveFineSlipData = null;
+
+// Convert numerical amount to English currency words
+function numberToWordsRupees(amount) {
+    amount = Math.round(Number(amount) || 0);
+    if (amount <= 0) return 'Zero Rupees (No Fine Due)';
+
+    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+        'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+    function convertLessThanThousand(n) {
+        if (n === 0) return '';
+        if (n < 20) return ones[n] + ' ';
+        if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + ones[n % 10] : '') + ' ';
+        return ones[Math.floor(n / 100)] + ' Hundred ' + (n % 100 !== 0 ? convertLessThanThousand(n % 100) : '');
+    }
+
+    let words = '';
+    if (amount >= 10000000) {
+        words += convertLessThanThousand(Math.floor(amount / 10000000)) + 'Crore ';
+        amount %= 10000000;
+    }
+    if (amount >= 100000) {
+        words += convertLessThanThousand(Math.floor(amount / 100000)) + 'Lakh ';
+        amount %= 100000;
+    }
+    if (amount >= 1000) {
+        words += convertLessThanThousand(Math.floor(amount / 1000)) + 'Thousand ';
+        amount %= 1000;
+    }
+    if (amount > 0) {
+        words += convertLessThanThousand(amount);
+    }
+
+    return words.trim() + ' Rupees Only';
+}
+
+let currentFineSlipLayoutMode = 'atm-card'; // Default to ATM card size as requested
+
+// Switch between ATM Card (85.6x54mm), Pocket Slip (85.6mm width), and Full Standard Slip
+function setFineSlipLayout(mode) {
+    currentFineSlipLayoutMode = mode;
+    try { sessionStorage.setItem('preferredSlipLayout', mode); } catch (e) { }
+
+    // Sync button states across all switchers (modal & standalone page)
+    ['atm-card', 'atm-pocket', 'standard'].forEach(m => {
+        document.querySelectorAll(`.btn-slip-layout-${m}`).forEach(btn => {
+            if (m === mode) {
+                btn.classList.add('active', 'btn-primary');
+                btn.classList.remove('btn-outline-secondary', 'btn-outline-light');
+            } else {
+                btn.classList.remove('active', 'btn-primary');
+                btn.classList.add(btn.closest('.modal-header') ? 'btn-outline-light' : 'btn-outline-secondary');
+            }
+        });
+    });
+
+    const previewContainer = document.getElementById('fineSlipPreviewContainer');
+    if (previewContainer && currentActiveFineSlipData) {
+        previewContainer.innerHTML = generateFineSlipCardHTML(currentActiveFineSlipData, currentFineSlipLayoutMode);
+    }
+}
+
+// Generate the printable / viewable fine slip card HTML
+function generateFineSlipCardHTML(data, layoutMode = null) {
+    const mode = layoutMode || currentFineSlipLayoutMode || 'atm-card';
+    const receiptNo = data.receiptNo || ('FS-' + (Date.now().toString().slice(-6)));
+    const now = new Date();
+    const formattedDate = data.receiptDate || now.toISOString().split('T')[0];
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    const studentName = data.studentName || 'Student / Borrower';
+    const rollNo = data.rollNo || 'N/A';
+    const classDiv = data.classDiv || 'N/A';
+    const isStaff = String(rollNo).toUpperCase() === 'STAFF' || (data.status && data.status.includes('Staff'));
+    const borrowerCategory = isStaff ? 'Faculty / Staff Member' : `Regular Student (Class ${classDiv})`;
+
+    const bookId = data.bookId || 'BOOK-CODE';
+    const bookTitle = data.bookTitle || 'Unknown Title';
+    const author = data.author || 'Unknown Author';
+    const section = data.section || data.sectionName || 'GENERAL';
+
+    const issueDate = data.issueDate || 'N/A';
+    const dueDate = data.dueDate || 'N/A';
+    const returnDate = data.returnDate || formattedDate;
+    const allowedDays = data.allowedDays || (getClassGradeNum(classDiv) >= 6 ? 10 : 5);
+    const overdueDays = Math.max(0, parseInt(data.overdueDays, 10) || 0);
+    const fineRate = parseFloat(data.fineRate) || 5;
+    const overdueFine = overdueDays * fineRate;
+
+    const damageFine = Math.max(0, parseFloat(data.damageFine) || 0);
+    const damageReason = data.damageReason || (damageFine > 0 ? 'Physical Damage / Penalty' : 'None Reported (Intact)');
+
+    const calculatedTotal = overdueFine + damageFine;
+    const fineAmount = (data.fineAmount !== undefined && !isNaN(parseFloat(data.fineAmount)))
+        ? parseFloat(data.fineAmount)
+        : calculatedTotal;
+    const isPaid = !!data.finePaid;
+    const paymentMode = data.paymentMode || 'Cash Desk';
+
+    const words = numberToWordsRupees(fineAmount);
+    const barcodeSvg = typeof renderBookBarcode === 'function'
+        ? renderBookBarcode(bookId, { height: 26, fontSize: 8 })
+        : `<div class="fw-bold text-center text-primary font-monospace">${bookId}</div>`;
+
+    const miniBarcodeSvg = typeof renderBookBarcode === 'function'
+        ? renderBookBarcode(bookId, { height: 16, fontSize: 0 })
+        : `<div class="fw-bold font-monospace" style="font-size: 5pt;">${bookId}</div>`;
+
+    const stampClass = isPaid ? 'paid' : 'due';
+    const stampText = isPaid ? 'PAID' : 'FINE DUE';
+    const stampSubText = isPaid ? 'COLLECTED & VERIFIED' : 'PENDING PAYMENT';
+
+    // Logo path resolution based on location
+    const path = (window.location && window.location.pathname) ? window.location.pathname.replace(/\\/g, '/') : '';
+    let logoSrc = '../images/image.png';
+    if (path.includes('lead/admin') || path.includes('lead/principal')) {
+        logoSrc = '../../../images/image.png';
+    } else if (path.includes('subpages')) {
+        logoSrc = '../images/image.png';
+    } else {
+        logoSrc = 'assets/images/image.png';
+    }
+
+    // 1. ATM CARD SIZE (ISO 7810 ID-1: 85.6mm x 53.98mm - Front & Back Pocket Wallet Card)
+    if (mode === 'atm-card') {
+        return `
+            <div class="atm-slip-wrapper" id="activeFineSlipElement">
+                <div class="atm-cut-guide no-print">
+                    <i class="bi bi-scissors text-danger"></i>
+                    <span><strong>ATM Card Size:</strong> 85.6 mm &times; 53.98 mm &bull; Front (Fine Details) & Back (Policy Conditions & Signatures)</span>
+                </div>
+
+                <div class="atm-card-pair">
+                    <!-- FRONT SIDE OF ATM CARD (85.6mm x 54mm) -->
+                    <div class="atm-card atm-card-front" id="atmCardFront">
+                        <div class="atm-card-header">
+                            <div class="atm-header-left">
+                                <img src="${logoSrc}" alt="Logo" class="atm-card-logo" onerror="this.onerror=null; this.src='https://img.icons8.com/color/96/000000/books.png';">
+                                <div class="atm-header-titles">
+                                    <h4 class="atm-college-name">KUTHBUKHANA ANWARIYYA</h4>
+                                    <div class="atm-slip-subtitle">FINE RECEIPT CARD &bull; <span class="atm-receipt-no">${receiptNo}</span></div>
+                                </div>
+                            </div>
+                            <div class="atm-header-right">
+                                <div class="atm-chip" title="EMV Smart Chip"></div>
+                            </div>
+                        </div>
+
+                        <div class="atm-card-body">
+                            <div class="atm-row">
+                                <div class="atm-row-item">
+                                    <span class="atm-label">Borrower:</span>
+                                    <strong class="atm-val">${studentName}</strong> 
+                                    <span class="text-muted">(#${rollNo}, Cl: ${classDiv})</span>
+                                </div>
+                            </div>
+
+                            <div class="atm-row">
+                                <div class="atm-row-item">
+                                    <span class="atm-label">Book:</span>
+                                    <strong class="atm-val">${bookTitle}</strong> 
+                                    <span class="atm-val-code">${bookId}</span>
+                                </div>
+                            </div>
+
+                            <div class="atm-row" style="font-size: 5.1pt;">
+                                <div class="atm-row-item">
+                                    <span class="atm-label">Author:</span> <strong class="atm-val">${author}</strong>
+                                    <span class="mx-1 text-muted">|</span>
+                                    <span class="atm-label">Dates:</span> <span class="text-muted">${issueDate} &rarr; ${returnDate}</span>
+                                </div>
+                            </div>
+
+                            <!-- Overdue & Damage Breakdown strip -->
+                            <div class="atm-breakdown-strip">
+                                <div class="atm-breakdown-col">
+                                    <div class="atm-b-title">
+                                        <span>Ower Days:</span>
+                                        <span class="atm-b-fee">₹${overdueFine.toFixed(0)}</span>
+                                    </div>
+                                    <div class="atm-b-detail">${overdueDays} day(s) late &times; ₹${fineRate}/d</div>
+                                </div>
+                                <div class="atm-breakdown-col" style="border-left: 0.6px solid #cbd5e1; padding-left: 1.2mm;">
+                                    <div class="atm-b-title">
+                                        <span>Damage:</span>
+                                        <span class="atm-b-fee">₹${damageFine.toFixed(0)}</span>
+                                    </div>
+                                    <div class="atm-b-detail">${damageReason}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="atm-card-footer">
+                            <div class="atm-footer-barcode">
+                                ${miniBarcodeSvg}
+                                <div class="atm-barcode-code">${bookId}</div>
+                            </div>
+                            <div class="atm-stamp-badge ${stampClass}">
+                                ${stampText}
+                            </div>
+                            <div class="atm-amount-group">
+                                <div class="atm-amount-lbl">TOTAL FINE</div>
+                                <div class="atm-amount-num ${isPaid ? 'is-paid' : ''}">₹${fineAmount.toFixed(2)}</div>
+                                <div class="atm-amount-words">${words}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BACK SIDE OF ATM CARD (85.6mm x 54mm) -->
+                    <div class="atm-card atm-card-back" id="atmCardBack">
+                        <div class="atm-mag-stripe"></div>
+
+                        <div class="atm-back-content">
+                            <div class="atm-back-header">
+                                <span class="atm-back-title"><i class="bi bi-shield-check text-primary"></i> Library Rules (നിബന്ധനകൾ)</span>
+                                <span class="atm-back-ref">${formattedDate}</span>
+                            </div>
+
+                            <ol class="atm-conditions-list">
+                                <li><strong>Overdue Days (വൈകിയ ദിവസങ്ങൾ):</strong> ₹5.00/working day after due date.</li>
+                                <li><strong>Book Damage (കേടുപാടുകൾ):</strong> Strict fine for torn/water-damaged copies.</li>
+                                <li><strong>Lost / Irreparable (നഷ്ടപ്പെട്ട പുസ്തകം):</strong> Must replace or pay full book cost.</li>
+                                <li><strong>Clearance (ക്ലിയറൻസ്):</strong> Settle dues to borrow books or get clearance.</li>
+                            </ol>
+
+                            <div class="atm-back-bottom">
+                                <div class="atm-sig-box">
+                                    <div class="atm-sig-line"></div>
+                                    <div class="atm-sig-txt">Borrower Sign</div>
+                                </div>
+                                <div class="atm-seal-mini">
+                                    <span>LIBRARY<br>SEAL</span>
+                                </div>
+                                <div class="atm-sig-box">
+                                    <div class="atm-sig-line"></div>
+                                    <div class="atm-sig-txt">Librarian Sign</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 2. POCKET SLIP (ATM Card Width: 85.6mm, Continuous Single Vertical Card)
+    if (mode === 'atm-pocket') {
+        return `
+            <div class="atm-slip-wrapper" id="activeFineSlipElement">
+                <div class="atm-cut-guide no-print">
+                    <i class="bi bi-wallet2 text-primary"></i>
+                    <span><strong>Pocket Slip:</strong> 85.6 mm Width (Fits into pocket/wallet or inside book)</span>
+                </div>
+
+                <div class="atm-pocket-card">
+                    <!-- Header -->
+                    <div class="slip-header">
+                        <div class="slip-header-logo-row">
+                            <img src="${logoSrc}" alt="Library Logo" class="slip-logo" onerror="this.onerror=null; this.src='https://img.icons8.com/color/96/000000/books.png';">
+                            <div class="slip-header-text">
+                                <h3 class="slip-library-title">KUTHBUKHANA ANWARIYYA</h3>
+                                <div class="slip-library-subtitle">CENTRAL LIBRARY &bull; FINE SLIP</div>
+                                <div class="slip-doc-badge">SLIP #${receiptNo}</div>
+                            </div>
+                        </div>
+                        <div class="slip-meta-strip mt-2">
+                            <div><strong>Date:</strong> <span>${formattedDate}</span></div>
+                            <div><strong>Borrower:</strong> <strong>${studentName}</strong> (#${rollNo})</div>
+                        </div>
+                    </div>
+
+                    <!-- Book particulars -->
+                    <div class="slip-section-box slip-book-highlight-box">
+                        <div class="slip-section-heading">
+                            <i class="bi bi-book-half text-info"></i> Book Particulars
+                        </div>
+                        <div class="slip-grid-2">
+                            <div class="slip-full-width">
+                                <span class="slip-label">Title:</span> 
+                                <strong class="slip-value slip-book-title-value" style="font-size: 0.85rem;">${bookTitle}</strong>
+                            </div>
+                            <div>
+                                <span class="slip-label">Code:</span> 
+                                <span class="slip-code-pill" style="font-size: 0.65rem;">${bookId}</span>
+                            </div>
+                            <div>
+                                <span class="slip-label">Author:</span> 
+                                <strong class="slip-value">${author}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Breakdown Table -->
+                    <div class="slip-section-box">
+                        <div class="slip-section-heading">
+                            <i class="bi bi-calculator-fill text-danger"></i> Assessment Breakdown
+                        </div>
+                        <div class="slip-breakdown-box">
+                            <table class="slip-breakdown-table">
+                                <thead>
+                                    <tr>
+                                        <th>Particulars</th>
+                                        <th style="text-align: right;">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <strong>Ower Days:</strong> ${overdueDays}d &times; ₹${fineRate}/d
+                                        </td>
+                                        <td style="text-align: right; font-weight: 700; color: ${overdueFine > 0 ? '#b91c1c' : '#334155'};">
+                                            ₹${overdueFine.toFixed(2)}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <strong>Damage:</strong> ${damageReason}
+                                        </td>
+                                        <td style="text-align: right; font-weight: 700; color: ${damageFine > 0 ? '#b91c1c' : '#334155'};">
+                                            ₹${damageFine.toFixed(2)}
+                                        </td>
+                                    </tr>
+                                    <tr class="slip-breakdown-total-row">
+                                        <td><strong>TOTAL FINE:</strong></td>
+                                        <td style="text-align: right; font-weight: 800; color: #b91c1c;">
+                                            ₹${fineAmount.toFixed(2)}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Fine Summary Row -->
+                    <div class="slip-fine-summary-row py-2 px-2 my-2">
+                        <div class="slip-barcode-area">
+                            ${miniBarcodeSvg}
+                            <small class="text-muted fw-bold" style="font-size: 0.58rem;">${bookId}</small>
+                        </div>
+                        <div class="slip-status-stamp-area">
+                            <div class="slip-stamp ${stampClass}" style="padding: 2px 8px;">
+                                <span class="slip-stamp-text" style="font-size: 0.85rem;">${stampText}</span>
+                            </div>
+                        </div>
+                        <div class="slip-amount-box ${isPaid ? 'is-paid' : ''}">
+                            <div class="slip-amount-num" style="font-size: 1.15rem;">₹${fineAmount.toFixed(2)}</div>
+                            <div class="slip-amount-words" style="font-size: 0.58rem;">${words}</div>
+                        </div>
+                    </div>
+
+                    <!-- Conditions Box -->
+                    <div class="slip-conditions-box">
+                        <div class="slip-conditions-header" style="font-size: 0.62rem;">
+                            <i class="bi bi-shield-check text-primary"></i> Library Conditions (നിബന്ധനകൾ):
+                        </div>
+                        <ol class="slip-conditions-list">
+                            <li><strong>Overdue:</strong> ₹5.00/working day after due date.</li>
+                            <li><strong>Damage:</strong> Strict penalty for torn or marked copies.</li>
+                            <li><strong>Loss:</strong> Must replace or pay full book cost.</li>
+                            <li><strong>Clearance:</strong> Settle all dues before borrowing.</li>
+                        </ol>
+                    </div>
+
+                    <!-- Signatures -->
+                    <div class="slip-signatures-row mt-2 pt-1">
+                        <div class="slip-sig-block" style="width: 100px;">
+                            <div class="slip-sig-line" style="height: 18px;"></div>
+                            <div class="slip-sig-text" style="font-size: 0.55rem;">Borrower Sign</div>
+                        </div>
+                        <div class="slip-official-seal-circle" style="width: 38px; height: 38px; font-size: 0.45rem;">
+                            <span>SEAL</span>
+                        </div>
+                        <div class="slip-sig-block" style="width: 100px;">
+                            <div class="slip-sig-line" style="height: 18px;"></div>
+                            <div class="slip-sig-text" style="font-size: 0.55rem;">Librarian Sign</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 3. FULL STANDARD DETAILED SLIP (A4 Sheet Layout)
+    return `
+        <div class="fine-slip-card" id="activeFineSlipElement">
+            <!-- Header -->
+            <div class="slip-header">
+                <div class="slip-header-logo-row">
+                    <img src="${logoSrc}" alt="Library Logo" class="slip-logo" onerror="this.onerror=null; this.src='https://img.icons8.com/color/96/000000/books.png';">
+                    <div class="slip-header-text">
+                        <h3 class="slip-library-title">KUTHBUKHANA ANWARIYYA</h3>
+                        <div class="slip-library-subtitle">CENTRAL LIBRARY & INFORMATION RESOURCE CENTRE</div>
+                        <div class="slip-doc-badge">OFFICIAL OVERDUE & DAMAGE FINE RECEIPT SLIP</div>
+                    </div>
+                </div>
+                <div class="slip-meta-strip">
+                    <div><strong>Slip / Receipt No:</strong> <code class="text-primary fw-bold">${receiptNo}</code></div>
+                    <div><strong>Receipt Date:</strong> <span>${formattedDate} &bull; ${timeStr}</span></div>
+                </div>
+            </div>
+
+            <!-- Borrower / Student Details -->
+            <div class="slip-section-box">
+                <div class="slip-section-heading">
+                    <i class="bi bi-person-fill text-primary"></i> 1. Borrower Particulars
+                </div>
+                <div class="slip-grid-2">
+                    <div><span class="slip-label">Student Name:</span> <strong class="slip-value">${studentName}</strong></div>
+                    <div><span class="slip-label">Roll / Adm No:</span> <strong class="slip-value text-primary">${rollNo}</strong></div>
+                    <div><span class="slip-label">Class & Division:</span> <span class="slip-value">${classDiv}</span></div>
+                    <div><span class="slip-label">Category:</span> <span class="slip-value">${borrowerCategory}</span></div>
+                </div>
+            </div>
+
+            <!-- Book Particulars (Specifically Highlighted with Name, Code, Author) -->
+            <div class="slip-section-box slip-book-highlight-box">
+                <div class="slip-section-heading">
+                    <i class="bi bi-book-half text-info"></i> 2. Book Particulars (Name, Code & Author)
+                </div>
+                <div class="slip-grid-2">
+                    <div class="slip-full-width">
+                        <span class="slip-label">Book Name (Title):</span> 
+                        <strong class="slip-value slip-book-title-value">${bookTitle}</strong>
+                    </div>
+                    <div>
+                        <span class="slip-label">Book Code / ID:</span> 
+                        <span class="slip-code-pill">${bookId}</span>
+                    </div>
+                    <div>
+                        <span class="slip-label">Author Name:</span> 
+                        <strong class="slip-value text-dark">${author}</strong>
+                    </div>
+                    <div>
+                        <span class="slip-label">Section / Category:</span> 
+                        <span class="slip-value">${section}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Circulation & Overdue Timeline Table -->
+            <div class="slip-section-box">
+                <div class="slip-section-heading">
+                    <i class="bi bi-calendar-range text-warning"></i> 3. Circulation & Timeline Details
+                </div>
+                <table class="slip-details-table">
+                    <thead>
+                        <tr>
+                            <th>Issue Date</th>
+                            <th>Due Date</th>
+                            <th>Return / Settlement Date</th>
+                            <th>Allowed Duration</th>
+                            <th>Overdue Days (Ower Days)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>${issueDate}</td>
+                            <td>${dueDate}</td>
+                            <td>${returnDate}</td>
+                            <td>${allowedDays} Working Days</td>
+                            <td><strong class="${overdueDays > 0 ? 'text-danger' : 'text-success'}">${overdueDays} Day(s)</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Fine Assessment Breakdown (Overdue Days & Book Damage) -->
+            <div class="slip-section-box">
+                <div class="slip-section-heading">
+                    <i class="bi bi-calculator-fill text-danger"></i> 4. Fine Assessment Breakdown (Overdue Days & Book Damage)
+                </div>
+                <div class="slip-breakdown-box">
+                    <table class="slip-breakdown-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 36%;">Charge Particulars</th>
+                                <th>Assessment Basis / Remarks</th>
+                                <th style="width: 24%; text-align: right;">Amount (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <strong><i class="bi bi-clock-history text-danger me-1"></i> Overdue Days (Ower Days)</strong>
+                                </td>
+                                <td>
+                                    ${overdueDays} working day(s) late &times; ₹${fineRate.toFixed(2)}/day
+                                    <small class="text-muted d-block" style="font-size: 0.68rem;">(Sundays strictly excluded from overdue count)</small>
+                                </td>
+                                <td style="text-align: right; font-weight: 700; color: ${overdueFine > 0 ? '#b91c1c' : '#334155'};">
+                                    ₹${overdueFine.toFixed(2)}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> Book Damage (Damage Penalty)</strong>
+                                </td>
+                                <td>
+                                    <span class="${damageFine > 0 ? 'text-danger fw-bold' : 'text-secondary'}">${damageReason}</span>
+                                    <small class="text-muted d-block" style="font-size: 0.68rem;">${damageFine > 0 ? 'Assessed penalty for physical damage / missing pages / marks' : 'Condition verified intact upon return'}</small>
+                                </td>
+                                <td style="text-align: right; font-weight: 700; color: ${damageFine > 0 ? '#b91c1c' : '#334155'};">
+                                    ₹${damageFine.toFixed(2)}
+                                </td>
+                            </tr>
+                            <tr class="slip-breakdown-total-row">
+                                <td colspan="2">
+                                    <strong>TOTAL FINE ASSESSED (Overdue Days + Book Damage):</strong>
+                                </td>
+                                <td style="text-align: right; font-weight: 800; font-size: 0.95rem; color: #b91c1c;">
+                                    ₹${fineAmount.toFixed(2)}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Fine Summary & Status Box -->
+            <div class="slip-fine-summary-row">
+                <div class="slip-barcode-area">
+                    <div class="barcode-stamp-svg mb-1">${barcodeSvg}</div>
+                    <small class="text-muted fw-bold" style="font-size: 0.68rem;">CODE128: ${bookId}</small>
+                </div>
+                <div class="slip-status-stamp-area">
+                    <div class="slip-stamp ${stampClass}">
+                        <div class="slip-stamp-inner">
+                            <span class="slip-stamp-text">${stampText}</span>
+                            <span class="slip-stamp-sub">${stampSubText}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="slip-amount-box ${isPaid ? 'is-paid' : ''}">
+                    <div class="slip-amount-label">TOTAL FINE AMOUNT</div>
+                    <div class="slip-amount-num">₹${fineAmount.toFixed(2)}</div>
+                    <div class="slip-amount-words">${words}</div>
+                    <div class="slip-payment-mode"><small>Payment Mode: <strong>${paymentMode}</strong></small></div>
+                </div>
+            </div>
+
+            <!-- Official Library Fine Rules & Conditions -->
+            <div class="slip-conditions-box">
+                <div class="slip-conditions-header">
+                    <i class="bi bi-shield-check text-primary"></i> Library Borrowing & Fine Policy Conditions (ലൈബ്രറി നിബന്ധനകൾ):
+                </div>
+                <ol class="slip-conditions-list">
+                    <li><strong>Overdue Days (വൈകിയ ദിവസങ്ങൾ):</strong> Books must be returned on or before the due date. An overdue fine of ₹5.00 is charged per working day (Sundays excluded).</li>
+                    <li><strong>Book Damage & Penalty (കേടുപാടുകൾ):</strong> Borrowers are strictly responsible for returning books in undamaged condition. Pages torn, scribbled, water damaged, or binding ruined will attract repair/damage fines as assessed by the librarian.</li>
+                    <li><strong>Irreparable Damage / Loss (നഷ്ടപ്പെട്ട പുസ്തകം):</strong> For lost books or severely damaged copies that cannot be circulated, the borrower must replace with an identical original copy or pay the full replacement cost.</li>
+                    <li><strong>Library Clearance:</strong> All outstanding overdue and damage dues must be settled in full before borrowing additional books or obtaining academic/hall clearance.</li>
+                    <li><strong>Proof of Settlement:</strong> Retain this computer-generated receipt as authentic clearance proof for Kuthbukhana Anwariyya Library.</li>
+                </ol>
+            </div>
+
+            <div class="slip-divider-dashed"></div>
+
+            <!-- Signatures & Authority -->
+            <div class="slip-signatures-row">
+                <div class="slip-sig-block">
+                    <div class="slip-sig-line"></div>
+                    <div class="slip-sig-text">Borrower / Student Signature</div>
+                </div>
+                <div class="slip-stamp-placeholder">
+                    <div class="slip-official-seal-circle">
+                        <span>LIBRARY<br>OFFICIAL<br>SEAL</span>
+                    </div>
+                </div>
+                <div class="slip-sig-block">
+                    <div class="slip-sig-line"></div>
+                    <div class="slip-sig-text">Authorized Librarian Signature</div>
+                </div>
+            </div>
+
+            <!-- Official Disclaimer Footer -->
+            <div class="slip-footer-disclaimer">
+                <p class="mb-0">This is an official computer-generated receipt from Kuthbukhana Anwariyya Library.</p>
+                <p class="mb-0 text-muted" style="font-size: 0.68rem;">Please retain this receipt for official clearance. Books must be returned on or before due date to avoid fines.</p>
+            </div>
+        </div>
+    `;
+}
+
+// Ensure the global Fine Slip Modal container is present in the DOM
+function ensureFineSlipModalInDOM() {
+    let modalEl = document.getElementById('fineSlipModal');
+    if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.id = 'fineSlipModal';
+        modalEl.className = 'modal fade';
+        modalEl.tabIndex = -1;
+        modalEl.setAttribute('aria-labelledby', 'fineSlipModalLabel');
+        modalEl.setAttribute('aria-hidden', 'true');
+        modalEl.innerHTML = `
+            <div class="modal-dialog modal-lg fine-slip-modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content rounded-4 shadow-lg border-0 overflow-hidden">
+                    <div class="modal-header bg-dark text-white p-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-receipt-cutoff text-warning fs-4"></i>
+                            <div>
+                                <h5 class="modal-title fw-bold mb-0" id="fineSlipModalLabel">Library Fine Slip & Receipt</h5>
+                                <small class="text-light" style="opacity: 0.8;">Kuthbukhana Anwariyya &bull; Overdue Days & Book Damage Assessment</small>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 align-items-center flex-wrap">
+                            <!-- Size Switcher Buttons -->
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Slip Size Options">
+                                <button type="button" class="btn btn-sm btn-primary active btn-slip-layout-atm-card" onclick="setFineSlipLayout('atm-card')" title="Standard ATM Card Size (85.6 × 54 mm)">
+                                    <i class="bi bi-credit-card-2-front me-1"></i> ATM Card
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-light btn-slip-layout-atm-pocket" onclick="setFineSlipLayout('atm-pocket')" title="Pocket Slip (85.6 mm width)">
+                                    <i class="bi bi-receipt me-1"></i> Pocket
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-light btn-slip-layout-standard" onclick="setFineSlipLayout('standard')" title="Full Page Detailed Slip">
+                                    <i class="bi bi-file-earmark-text me-1"></i> Full
+                                </button>
+                            </div>
+                            <button type="button" class="btn btn-outline-light btn-sm" onclick="toggleFineSlipCustomizeDrawer()" id="btnToggleCustomizeSlip">
+                                <i class="bi bi-sliders me-1"></i> Customize / Edit
+                            </button>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                    </div>
+                    <div class="modal-body p-0 bg-light">
+                        <!-- Collapsible Editor Drawer -->
+                        <div id="fineSlipCustomizeDrawer" class="p-3 bg-white border-bottom shadow-sm" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-pencil-square me-1"></i> Edit Fine Slip Particulars (Overdue Days & Damage)</h6>
+                                <button type="button" class="btn btn-sm btn-link text-muted p-0 text-decoration-none" onclick="toggleFineSlipCustomizeDrawer()">Hide Editor <i class="bi bi-chevron-up"></i></button>
+                            </div>
+                            <!-- Quick select from active ledger -->
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted mb-1">Quick-Fill from Overdue / Recent Ledger</label>
+                                <select id="slipQuickLedgerSelect" class="form-select form-select-sm" onchange="loadSlipFromQuickPicker(this.value)">
+                                    <option value="">-- Choose a Borrower or Book from Ledger --</option>
+                                </select>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold mb-0">Student / Borrower Name</label>
+                                    <input type="text" id="slipEditStudentName" class="form-control form-control-sm" oninput="liveUpdateFineSlip()">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold mb-0">Roll No</label>
+                                    <input type="text" id="slipEditRollNo" class="form-control form-control-sm" oninput="liveUpdateFineSlip()">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold mb-0">Class / Div</label>
+                                    <input type="text" id="slipEditClassDiv" class="form-control form-control-sm" oninput="liveUpdateFineSlip()">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold mb-0">Book Code / ID</label>
+                                    <input type="text" id="slipEditBookId" class="form-control form-control-sm" oninput="liveUpdateFineSlip()">
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold mb-0">Book Name (Title)</label>
+                                    <input type="text" id="slipEditBookTitle" class="form-control form-control-sm" oninput="liveUpdateFineSlip()">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold mb-0">Author Name</label>
+                                    <input type="text" id="slipEditAuthor" class="form-control form-control-sm" oninput="liveUpdateFineSlip()">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold mb-0">Category / Section</label>
+                                    <input type="text" id="slipEditSection" class="form-control form-control-sm" oninput="liveUpdateFineSlip()">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold mb-0">Issue Date</label>
+                                    <input type="date" id="slipEditIssueDate" class="form-control form-control-sm" onchange="liveRecalculateFineSlip()">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold mb-0">Due Date</label>
+                                    <input type="date" id="slipEditDueDate" class="form-control form-control-sm" onchange="liveUpdateFineSlip()">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold mb-0">Return / Settlement Date</label>
+                                    <input type="date" id="slipEditReturnDate" class="form-control form-control-sm" onchange="liveRecalculateFineSlip()">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold mb-0 text-danger"><i class="bi bi-clock-history"></i> Overdue Working Days</label>
+                                    <input type="number" id="slipEditOverdueDays" class="form-control form-control-sm" min="0" oninput="liveRecalculateFineSlipAmount()">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold mb-0">Fine Rate (₹/day)</label>
+                                    <input type="number" id="slipEditFineRate" class="form-control form-control-sm" value="5" min="0" oninput="liveRecalculateFineSlipAmount()">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold mb-0 text-warning"><i class="bi bi-exclamation-triangle-fill"></i> Book Damage Fine (₹)</label>
+                                    <input type="number" id="slipEditDamageFine" class="form-control form-control-sm" value="0" min="0" oninput="liveRecalculateFineSlipAmount()">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold mb-0">Damage Reason / Notes</label>
+                                    <input type="text" id="slipEditDamageReason" class="form-control form-control-sm" placeholder="e.g. Torn pages, water damage, or None" oninput="liveUpdateFineSlip()">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold mb-0 text-success">Total Fine Amount (₹)</label>
+                                    <input type="number" id="slipEditFineAmount" class="form-control form-control-sm fw-bold text-danger" oninput="liveUpdateFineSlip()">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold mb-0">Payment Status</label>
+                                    <select id="slipEditStatus" class="form-select form-select-sm" onchange="liveUpdateFineSlip()">
+                                        <option value="paid">✅ Paid</option>
+                                        <option value="due">⚠️ Due</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold mb-0">Payment Mode</label>
+                                    <input type="text" id="slipEditPaymentMode" class="form-control form-control-sm" value="Cash Desk" oninput="liveUpdateFineSlip()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slip Preview Container -->
+                        <div class="fine-slip-wrapper" id="printableFineSlipArea">
+                            <div id="fineSlipPreviewContainer" class="w-100 d-flex justify-content-center">
+                                <!-- Generated Dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-white border-top p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                <i class="bi bi-x-lg me-1"></i> Close
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="copyFineSlipSummary()">
+                                <i class="bi bi-clipboard-check me-1"></i> Copy Receipt Text
+                            </button>
+                            <button type="button" class="btn btn-outline-dark" onclick="openStandaloneFineSlipPage()">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> Open Full Page Slip
+                            </button>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-success fw-bold px-4 shadow-sm" onclick="printActiveFineSlip()">
+                                <i class="bi bi-printer-fill me-1"></i> Print Fine Slip
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modalEl);
+    }
+    return modalEl;
+}
+
+// Open Fine Slip Modal with concrete slip data object
+function openFineSlipModalWithData(slipData) {
+    currentActiveFineSlipData = { ...slipData };
+    ensureFineSlipModalInDOM();
+
+    // Populate the slip preview in current layout (default: atm-card)
+    const previewContainer = document.getElementById('fineSlipPreviewContainer');
+    if (previewContainer) {
+        previewContainer.innerHTML = generateFineSlipCardHTML(currentActiveFineSlipData, currentFineSlipLayoutMode);
+    }
+
+    // Sync layout buttons
+    setFineSlipLayout(currentFineSlipLayoutMode);
+
+    // Populate editor fields
+    populateSlipEditorFields(currentActiveFineSlipData);
+    populateFineSlipQuickPicker();
+
+    // Show modal
+    const modalEl = document.getElementById('fineSlipModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        const instance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        instance.show();
+    }
+}
+
+// Open Fine Slip Modal for a specific ledger entry
+function openFineSlipByLedgerId(id) {
+    const ledger = getLedgerData();
+    const books = getBooksData();
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Find entry by id or bookId
+    let item = ledger.find(r => String(r.id) === String(id) || String(r.bookId) === String(id));
+    if (!item && !isNaN(Number(id)) && ledger[Number(id)]) {
+        item = ledger[Number(id)];
+    }
+
+    if (!item) {
+        // Fallback: try checking if it's a book in books table
+        const book = books[id];
+        if (book) {
+            const isStaff = book.issuedTo && book.issuedTo.includes('STAFF');
+            const allowed = book.allowedDays || (getClassGradeNum(book.classDiv) >= 6 ? 10 : 5);
+            const fineCalc = calculateOverdueFine(book.issueDate, allowed, 5, isStaff);
+            openFineSlipModalWithData({
+                receiptNo: 'FS-' + (Date.now().toString().slice(-6)),
+                bookId: id,
+                bookTitle: book.title || 'Unknown Title',
+                author: book.author || 'Unknown Author',
+                section: book.sectionName || book.section || 'General',
+                studentName: book.issuedTo || 'Borrower',
+                rollNo: 'N/A',
+                classDiv: book.classDiv || 'N/A',
+                issueDate: book.issueDate || todayStr,
+                dueDate: book.dueDate || todayStr,
+                returnDate: todayStr,
+                allowedDays: allowed,
+                overdueDays: fineCalc.overdueDays,
+                fineRate: 5,
+                overdueFine: fineCalc.fineAmount,
+                damageFine: 0,
+                damageReason: 'None / Intact',
+                fineAmount: fineCalc.fineAmount,
+                finePaid: false,
+                paymentMode: 'Cash Desk',
+                receiptDate: todayStr
+            });
+            return;
+        }
+        showPopupAlert('Record Not Found', 'Could not locate the requested ledger record or book.', 'warning');
+        return;
+    }
+
+    const book = books[item.bookId] || {};
+    const isStaff = item.rollNo === 'STAFF' || (item.status && item.status.includes('Staff'));
+    const isReturned = item.status === 'Returned';
+    const allowedDays = item.allowedDays || (getClassGradeNum(item.classDiv) >= 6 ? 10 : 5);
+
+    // Calculate overdue working days
+    const returnOrToday = isReturned && item.returnDate ? item.returnDate : todayStr;
+    const workingDaysElapsed = countWorkingDays(item.issueDate, returnOrToday);
+    const overdueWorkingDays = Math.max(0, workingDaysElapsed - allowedDays);
+    const calculatedOverdueFine = overdueWorkingDays * 5;
+
+    const damageFine = item.damageFine || 0;
+    const damageReason = item.damageReason || (damageFine > 0 ? 'Damage penalty' : 'None / Intact');
+
+    const totalFine = (isReturned && item.fineAmount !== undefined && item.fineAmount !== null)
+        ? item.fineAmount
+        : (calculatedOverdueFine + damageFine);
+    const finePaid = isReturned ? (item.finePaid ?? (item.fineAmount > 0)) : false;
+
+    openFineSlipModalWithData({
+        receiptNo: 'FS-' + (item.id ? String(item.id).slice(-6) : Date.now().toString().slice(-6)),
+        bookId: item.bookId,
+        bookTitle: item.bookTitle || book.title || 'Unknown Title',
+        author: item.author || book.author || 'Unknown Author',
+        section: book.sectionName || book.section || 'General',
+        studentName: item.studentName || 'Student',
+        rollNo: item.rollNo || 'N/A',
+        classDiv: item.classDiv || 'N/A',
+        issueDate: item.issueDate,
+        dueDate: item.dueDate || 'N/A',
+        returnDate: returnOrToday,
+        allowedDays: allowedDays,
+        overdueDays: isReturned ? Math.max(0, workingDaysElapsed - allowedDays) : overdueWorkingDays,
+        fineRate: 5,
+        overdueFine: calculatedOverdueFine,
+        damageFine: damageFine,
+        damageReason: damageReason,
+        fineAmount: totalFine,
+        finePaid: finePaid,
+        paymentMode: 'Cash Desk',
+        receiptDate: todayStr
+    });
+}
+
+// Open Fine Slip Modal for manual entry or new slip generation
+function openManualFineSlipModal(presetData = null) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const defaultData = presetData || {
+        receiptNo: 'FS-' + Date.now().toString().slice(-6),
+        bookId: '',
+        bookTitle: '',
+        author: '',
+        section: 'General',
+        studentName: '',
+        rollNo: '',
+        classDiv: '',
+        issueDate: todayStr,
+        dueDate: todayStr,
+        returnDate: todayStr,
+        allowedDays: 10,
+        overdueDays: 0,
+        fineRate: 5,
+        overdueFine: 0,
+        damageFine: 0,
+        damageReason: 'None / Intact',
+        fineAmount: 0,
+        finePaid: true,
+        paymentMode: 'Cash Desk',
+        receiptDate: todayStr
+    };
+
+    openFineSlipModalWithData(defaultData);
+
+    // Automatically open the customize drawer so the user can enter information immediately
+    const drawer = document.getElementById('fineSlipCustomizeDrawer');
+    if (drawer) drawer.style.display = 'block';
+}
+
+// Toggle visibility of the customization drawer in the modal
+function toggleFineSlipCustomizeDrawer() {
+    const drawer = document.getElementById('fineSlipCustomizeDrawer');
+    if (!drawer) return;
+    if (drawer.style.display === 'none' || !drawer.style.display) {
+        drawer.style.display = 'block';
+    } else {
+        drawer.style.display = 'none';
+    }
+}
+
+// Populate the editor inputs from data
+function populateSlipEditorFields(data) {
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val !== undefined && val !== null ? val : '';
+    };
+
+    setVal('slipEditStudentName', data.studentName);
+    setVal('slipEditRollNo', data.rollNo);
+    setVal('slipEditClassDiv', data.classDiv);
+    setVal('slipEditBookId', data.bookId);
+    setVal('slipEditBookTitle', data.bookTitle);
+    setVal('slipEditAuthor', data.author);
+    setVal('slipEditSection', data.section || data.sectionName);
+    setVal('slipEditIssueDate', data.issueDate);
+    setVal('slipEditDueDate', data.dueDate);
+    setVal('slipEditReturnDate', data.returnDate);
+    setVal('slipEditOverdueDays', data.overdueDays || 0);
+    setVal('slipEditFineRate', data.fineRate || 5);
+    setVal('slipEditDamageFine', data.damageFine || 0);
+    setVal('slipEditDamageReason', data.damageReason || '');
+    setVal('slipEditFineAmount', data.fineAmount !== undefined ? data.fineAmount : 0);
+    setVal('slipEditPaymentMode', data.paymentMode || 'Cash Desk');
+
+    const statusEl = document.getElementById('slipEditStatus');
+    if (statusEl) {
+        statusEl.value = data.finePaid ? 'paid' : 'due';
+    }
+}
+
+// Populate quick picker dropdown with overdue and recent ledger items
+function populateFineSlipQuickPicker() {
+    const select = document.getElementById('slipQuickLedgerSelect');
+    if (!select) return;
+
+    const ledger = getLedgerData();
+    let options = '<option value="">-- Choose a Borrower or Book from Ledger --</option>';
+
+    ledger.slice(0, 50).forEach((item, idx) => {
+        const isStaff = item.rollNo === 'STAFF' || (item.status && item.status.includes('Staff'));
+        const allowed = item.allowedDays || (getClassGradeNum(item.classDiv) >= 6 ? 10 : 5);
+        const fineInfo = calculateOverdueFine(item.issueDate, allowed, 5, isStaff);
+        const isOverdue = item.status === 'Issued' && fineInfo.overdueDays > 0;
+        const icon = isOverdue ? '⚠️ OVERDUE' : (item.status === 'Returned' && item.fineAmount > 0 ? '💰 FINE PAID' : '📋');
+        const key = item.id || idx;
+
+        options += `<option value="${key}">${icon} ${item.studentName} (Roll #${item.rollNo}) - "${item.bookTitle}" [${item.bookId}]</option>`;
+    });
+
+    select.innerHTML = options;
+}
+
+// Load chosen record from quick picker
+function loadSlipFromQuickPicker(key) {
+    if (!key) return;
+    openFineSlipByLedgerId(key);
+}
+
+// Live update fine slip preview based on inputs in customize drawer
+function liveUpdateFineSlip() {
+    if (!currentActiveFineSlipData) currentActiveFineSlipData = {};
+
+    const getVal = (id) => document.getElementById(id)?.value?.trim() || '';
+
+    currentActiveFineSlipData.studentName = getVal('slipEditStudentName');
+    currentActiveFineSlipData.rollNo = getVal('slipEditRollNo');
+    currentActiveFineSlipData.classDiv = getVal('slipEditClassDiv');
+    currentActiveFineSlipData.bookId = getVal('slipEditBookId');
+    currentActiveFineSlipData.bookTitle = getVal('slipEditBookTitle');
+    currentActiveFineSlipData.author = getVal('slipEditAuthor');
+    currentActiveFineSlipData.section = getVal('slipEditSection');
+    currentActiveFineSlipData.issueDate = getVal('slipEditIssueDate');
+    currentActiveFineSlipData.dueDate = getVal('slipEditDueDate');
+    currentActiveFineSlipData.returnDate = getVal('slipEditReturnDate');
+    currentActiveFineSlipData.overdueDays = parseInt(getVal('slipEditOverdueDays'), 10) || 0;
+    currentActiveFineSlipData.fineRate = parseFloat(getVal('slipEditFineRate')) || 5;
+    currentActiveFineSlipData.overdueFine = currentActiveFineSlipData.overdueDays * currentActiveFineSlipData.fineRate;
+
+    currentActiveFineSlipData.damageFine = parseFloat(getVal('slipEditDamageFine')) || 0;
+    currentActiveFineSlipData.damageReason = getVal('slipEditDamageReason') || (currentActiveFineSlipData.damageFine > 0 ? 'Physical Damage / Penalty' : 'None / Intact');
+
+    const totalInputVal = parseFloat(getVal('slipEditFineAmount'));
+    currentActiveFineSlipData.fineAmount = !isNaN(totalInputVal)
+        ? totalInputVal
+        : (currentActiveFineSlipData.overdueFine + currentActiveFineSlipData.damageFine);
+
+    currentActiveFineSlipData.paymentMode = getVal('slipEditPaymentMode') || 'Cash Desk';
+    currentActiveFineSlipData.finePaid = document.getElementById('slipEditStatus')?.value === 'paid';
+
+    const previewContainer = document.getElementById('fineSlipPreviewContainer');
+    if (previewContainer) {
+        previewContainer.innerHTML = generateFineSlipCardHTML(currentActiveFineSlipData, currentFineSlipLayoutMode);
+    }
+}
+
+// Live recalculate overdue days from dates
+function liveRecalculateFineSlip() {
+    const issueDate = document.getElementById('slipEditIssueDate')?.value;
+    const returnDate = document.getElementById('slipEditReturnDate')?.value || new Date().toISOString().split('T')[0];
+    const classDiv = document.getElementById('slipEditClassDiv')?.value;
+    const allowed = (getClassGradeNum(classDiv) >= 6) ? 10 : 5;
+
+    if (issueDate) {
+        const elapsed = countWorkingDays(issueDate, returnDate);
+        const overdue = Math.max(0, elapsed - allowed);
+        const overdueInput = document.getElementById('slipEditOverdueDays');
+        if (overdueInput) overdueInput.value = overdue;
+
+        const rateInput = document.getElementById('slipEditFineRate');
+        const rate = rateInput ? (parseFloat(rateInput.value) || 5) : 5;
+        const damageInput = document.getElementById('slipEditDamageFine');
+        const damage = damageInput ? (parseFloat(damageInput.value) || 0) : 0;
+
+        const amountInput = document.getElementById('slipEditFineAmount');
+        if (amountInput) amountInput.value = ((overdue * rate) + damage).toFixed(2);
+    }
+    liveUpdateFineSlip();
+}
+
+// Live recalculate fine amount from overdue days * rate + damage fine
+function liveRecalculateFineSlipAmount() {
+    const overdue = parseInt(document.getElementById('slipEditOverdueDays')?.value, 10) || 0;
+    const rate = parseFloat(document.getElementById('slipEditFineRate')?.value) || 5;
+    const damage = parseFloat(document.getElementById('slipEditDamageFine')?.value) || 0;
+
+    const total = (overdue * rate) + damage;
+    const amountInput = document.getElementById('slipEditFineAmount');
+    if (amountInput) amountInput.value = total.toFixed(2);
+    liveUpdateFineSlip();
+}
+
+// Print the active fine slip
+function printActiveFineSlip() {
+    if (!currentActiveFineSlipData) return;
+
+    const mode = currentFineSlipLayoutMode || 'atm-card';
+    const slipCardHtml = generateFineSlipCardHTML(currentActiveFineSlipData, mode);
+    const printWindow = window.open('', '_blank', 'width=850,height=750');
+    if (printWindow) {
+        // Path resolution for stylesheet
+        const path = (window.location && window.location.pathname) ? window.location.pathname.replace(/\\/g, '/') : '';
+        let styleHref = '../style.css';
+        if (path.includes('lead/admin') || path.includes('lead/principal')) {
+            styleHref = '../../../style.css';
+        } else if (path.includes('subpages')) {
+            styleHref = '../style.css';
+        } else {
+            styleHref = 'assets/style.css';
+        }
+
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Fine Slip - ${currentActiveFineSlipData.receiptNo || 'Receipt'}</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+                <link rel="stylesheet" href="${styleHref}">
+                <style>
+                    body {
+                        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                        background: #ffffff;
+                        margin: 0;
+                        padding: 15px;
+                        color: #0f172a;
+                    }
+                    @media print {
+                        body { padding: 0 !important; margin: 0 !important; }
+                        .no-print { display: none !important; }
+                        .atm-card-pair {
+                            display: flex !important;
+                            flex-direction: row !important;
+                            justify-content: center !important;
+                            align-items: center !important;
+                            gap: 6mm !important;
+                            margin: 0 auto !important;
+                            page-break-inside: avoid !important;
+                        }
+                        .atm-card {
+                            box-shadow: none !important;
+                            border: 1.5px solid #000000 !important;
+                            page-break-inside: avoid !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        .atm-pocket-card {
+                            box-shadow: none !important;
+                            border: 1.5px solid #000000 !important;
+                            page-break-inside: avoid !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        .fine-slip-card {
+                            box-shadow: none !important;
+                            border: 2px solid #000000 !important;
+                            max-width: 100% !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                </style>
+            </head>
+            <body>
+                ${slipCardHtml}
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    };
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        // Fallback to standard window print
+        window.print();
+    }
+}
+
+// Copy a clean textual receipt summary to the clipboard
+function copyFineSlipSummary() {
+    if (!currentActiveFineSlipData) return;
+    const d = currentActiveFineSlipData;
+
+    const overdueDays = d.overdueDays || 0;
+    const fineRate = d.fineRate || 5;
+    const overdueFine = d.overdueFine !== undefined ? d.overdueFine : (overdueDays * fineRate);
+    const damageFine = d.damageFine || 0;
+    const damageReason = d.damageReason || (damageFine > 0 ? 'Damage penalty' : 'None / Intact');
+
+    const summary = `================================================
+KUTHBUKHANA ANWARIYYA - OFFICIAL FINE RECEIPT
+================================================
+Slip No:        ${d.receiptNo || 'N/A'}
+Receipt Date:   ${d.receiptDate || new Date().toISOString().split('T')[0]}
+Borrower:       ${d.studentName} (Roll #${d.rollNo}, Class ${d.classDiv})
+------------------------------------------------
+BOOK DETAILS:
+Book Name:      ${d.bookTitle}
+Book Code / ID: ${d.bookId}
+Author Name:    ${d.author || 'Not specified'}
+Category:       ${d.section || 'General'}
+------------------------------------------------
+ASSESSMENT BREAKDOWN:
+1. OVERDUE DAYS (Ower Days):
+   • ${overdueDays} working day(s) @ ₹${fineRate.toFixed(2)}/day = ₹${overdueFine.toFixed(2)}
+2. BOOK DAMAGE (Damage Penalty):
+   • Penalty: ₹${damageFine.toFixed(2)}
+   • Reason / Notes: ${damageReason}
+------------------------------------------------
+TOTAL FINE:     ₹${(d.fineAmount || 0).toFixed(2)} (${numberToWordsRupees(d.fineAmount)})
+Status:         ${d.finePaid ? 'PAID' : 'PENDING DUE'} (${d.paymentMode || 'Cash Desk'})
+------------------------------------------------
+POLICY CONDITIONS (നിബന്ധനകൾ):
+1. Overdue fine is ₹5.00/working day (Sundays excluded).
+2. Damage to books incurs repair penalty or replacement cost.
+3. Lost or destroyed books must be replaced with original copies.
+4. All dues must be cleared before academic/library clearance.
+================================================
+Authorized by Kuthbukhana Anwariyya Central Library
+================================================`;
+
+if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(summary).then(() => {
+        if (typeof showPopupAlert === 'function') {
+            showPopupAlert('Receipt Copied', 'Fine receipt text summary copied to clipboard successfully!', 'success');
+        } else {
+            alert('Receipt copied to clipboard!');
+        }
+    });
+} else {
+    const textarea = document.createElement('textarea');
+    textarea.value = summary;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    alert('Fine receipt text summary copied to clipboard!');
+}
+}
+
+// Open standalone fine slip page
+function openStandaloneFineSlipPage() {
+    if (!currentActiveFineSlipData) return;
+    sessionStorage.setItem('activeFineSlipData', JSON.stringify(currentActiveFineSlipData));
+
+    const path = window.location.pathname.replace(/\\/g, '/');
+    let target = 'fineSlip.html';
+    if (path.includes('lead/admin') || path.includes('lead/principal')) {
+        target = '../../fineSlip.html';
+    } else if (path.includes('subpages')) {
+        target = 'fineSlip.html';
+    } else {
+        target = 'assets/subpages/fineSlip.html';
+    }
+    window.open(`${target}?id=${encodeURIComponent(currentActiveFineSlipData.receiptNo)}`, '_blank');
 }
