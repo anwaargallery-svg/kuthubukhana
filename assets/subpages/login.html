@@ -196,6 +196,17 @@
         <!-- Inline Error Alert -->
         <div id="loginErrorAlert" class="alert alert-danger py-2 px-3 small rounded-3 mb-3" style="display: none;"></div>
 
+        <!-- No Admin Warning Card (Shown when all admin accounts were deleted) -->
+        <div id="noAdminAlert" class="alert alert-warning py-2 px-3 small rounded-3 mb-3 border-0 text-dark shadow-sm" style="display: none; background: #fef3c7;">
+            <div class="fw-bold d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-shield-exclamation text-warning fs-5"></i> No Administrator Found
+            </div>
+            <div class="small mb-2 text-dark opacity-75">All administrator accounts have been deleted. You can create a fresh administrator account now.</div>
+            <button type="button" class="btn btn-sm btn-dark w-100 fw-bold" onclick="openAdminSetupModal()">
+                <i class="bi bi-person-plus-fill me-1 text-warning"></i> Setup Administrator Account
+            </button>
+        </div>
+
         <!-- Login Form -->
         <form id="simpleLoginForm" onsubmit="handleLoginSubmit(event)">
             <input type="hidden" id="selectedRoleInput" value="admin">
@@ -271,17 +282,17 @@
                 title: 'College Teacher / Staff',
                 desc: 'College faculty portal: View your taken books & borrowing history',
                 defaultUser: 'majeed',
-                pwdHint: 'Default: 321 or staff123',
+                pwdHint: 'Default: 123 or 321 or staff123',
                 btnText: 'Sign In to Teacher Portal',
                 showUser: true
             },
             principal: {
                 title: 'Principal',
                 desc: 'Executive monitoring, stock audit & emergency closure control',
-                defaultUser: '',
+                defaultUser: 'principal',
                 pwdHint: 'Default: principal123',
                 btnText: 'Sign In to Principal Portal',
-                showUser: false
+                showUser: true
             }
         };
 
@@ -295,6 +306,8 @@
                 if (tabs[0]) setRoleVisual('admin', tabs[0]);
             } else if (u === 'majeed' || u === 'maje') {
                 if (tabs[2]) setRoleVisual('staff', tabs[2]);
+            } else if (u === 'principal') {
+                if (tabs[3]) setRoleVisual('principal', tabs[3]);
             }
         }
 
@@ -314,7 +327,7 @@
 
             if (hintPwd) hintPwd.innerText = config.pwdHint;
             if (btnText) btnText.innerText = config.btnText;
-            if (labelPwd) labelPwd.innerText = (role === 'staff' ? 'Teacher Password' : 'Password');
+            if (labelPwd) labelPwd.innerText = (role === 'staff' ? 'Teacher Password' : (role === 'principal' ? 'Principal Passcode' : 'Password'));
         }
 
         function setRole(role, btn) {
@@ -338,11 +351,12 @@
 
             if (config.showUser) {
                 if (groupUser) groupUser.style.display = 'block';
-                if (labelPwd) labelPwd.innerText = (role === 'staff' ? 'Teacher Password' : 'Password');
-                if (uInput && !uInput.value.trim()) {
+                if (labelPwd) labelPwd.innerText = (role === 'staff' ? 'Teacher Password' : (role === 'principal' ? 'Principal Passcode' : 'Password'));
+                if (uInput) {
                     if (role === 'admin') uInput.value = 'admin';
                     else if (role === 'librarian') uInput.value = 'librarian';
                     else if (role === 'staff') uInput.value = 'majeed';
+                    else if (role === 'principal') uInput.value = 'principal';
                 }
             } else {
                 if (groupUser) groupUser.style.display = 'none';
@@ -409,11 +423,15 @@
             }
 
             try {
-                // If username is 'librarian', force role in payload to 'librarian'
-                const effectiveRole = (username.toLowerCase() === 'librarian') ? 'librarian' : role;
-                const payload = (effectiveRole !== 'principal')
-                    ? { role: effectiveRole, username, password }
-                    : { role: effectiveRole, password };
+                let effectiveRole = role;
+                const lowerUser = (username || '').toLowerCase();
+                if (lowerUser === 'librarian') effectiveRole = 'librarian';
+                else if (lowerUser === 'admin') effectiveRole = 'admin';
+                else if (lowerUser === 'principal') effectiveRole = 'principal';
+
+                const payload = (effectiveRole === 'principal')
+                    ? { role: 'principal', password }
+                    : { role: effectiveRole, username: username || '', password };
 
                 const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
                     method: 'POST',
@@ -572,6 +590,87 @@
             }
         }
 
+        // Check if an administrator exists on server
+        async function checkAdminStatus() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/librarians`);
+                if (res.ok) {
+                    const librarians = await res.json();
+                    const hasAdmin = Array.isArray(librarians) && librarians.some(l => l.role === 'admin');
+                    const alertEl = document.getElementById('noAdminAlert');
+                    if (alertEl) {
+                        alertEl.style.display = hasAdmin ? 'none' : 'block';
+                    }
+                }
+            } catch (err) {
+                // Offline fallback
+            }
+        }
+
+        function openAdminSetupModal() {
+            const modalEl = document.getElementById('setupAdminModal');
+            if (modalEl && typeof bootstrap !== 'undefined') {
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            }
+        }
+
+        async function handleInitialAdminSetup(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const errBox = document.getElementById('setupAdminError');
+            if (errBox) errBox.style.display = 'none';
+
+            const name = document.getElementById('setupAdminName')?.value?.trim();
+            const username = document.getElementById('setupAdminUsername')?.value?.trim().toLowerCase();
+            const password = document.getElementById('setupAdminPassword')?.value?.trim();
+
+            if (!name || !username || !password) {
+                if (errBox) { errBox.innerText = 'Please complete all fields.'; errBox.style.display = 'block'; }
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmitAdminSetup');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Creating Admin...';
+            }
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/auth/setup-admin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, username, password })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    localStorage.setItem('library_auth_role', 'admin');
+                    localStorage.setItem('library_auth_token', 'admin_token_' + Date.now());
+                    localStorage.setItem('library_auth_time', Date.now());
+                    localStorage.setItem('library_auth_username', data.user.username);
+                    localStorage.setItem('library_auth_name', data.user.name);
+                    localStorage.setItem('library_auth_user', JSON.stringify(data.user));
+
+                    alert(`✅ Administrator "${data.user.name}" (@${data.user.username}) created successfully!\n\nRedirecting to Admin Dashboard...`);
+                    window.location.href = 'lead/admin/admin.html';
+                } else {
+                    if (errBox) {
+                        errBox.innerText = data.message || 'Failed to create administrator.';
+                        errBox.style.display = 'block';
+                    }
+                }
+            } catch (err) {
+                if (errBox) {
+                    errBox.innerText = 'Network error: ' + err.message;
+                    errBox.style.display = 'block';
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Create Admin & Sign In';
+                }
+            }
+        }
+
         // Auto-select role based on URL query param (e.g. ?role=principal or ?role=staff or ?role=librarian)
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
@@ -581,8 +680,48 @@
             else if (targetRole === 'staff' && tabs[2]) setRole('staff', tabs[2]);
             else if (targetRole === 'librarian' && tabs[1]) setRole('librarian', tabs[1]);
             else if (tabs[0]) setRole('admin', tabs[0]);
+
+            checkAdminStatus();
         });
     </script>
+
+    <!-- Initial Admin Setup Modal -->
+    <div class="modal fade" id="setupAdminModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-white border-0 shadow-lg rounded-4" style="background: #1e293b; border: 1px solid rgba(255,255,255,0.15) !important;">
+                <div class="modal-header border-bottom border-secondary border-opacity-25">
+                    <h5 class="modal-title fw-bold text-warning d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-lock-fill"></i> Create Initial Administrator
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="setupAdminForm" onsubmit="handleInitialAdminSetup(event)">
+                    <div class="modal-body p-4">
+                        <p class="text-white-50 small mb-3">All previous administrator accounts were deleted. Register your new Chief Administrator account to manage the library.</p>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-white-50 text-uppercase">Full Name / Display Name *</label>
+                            <input type="text" class="form-control" id="setupAdminName" placeholder="e.g. Chief Administrator" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-white-50 text-uppercase">Username (Login ID) *</label>
+                            <input type="text" class="form-control" id="setupAdminUsername" placeholder="e.g. admin" required autocomplete="username">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-white-50 text-uppercase">Password *</label>
+                            <input type="password" class="form-control" id="setupAdminPassword" placeholder="Min 3 characters" required autocomplete="new-password">
+                        </div>
+                        <div id="setupAdminError" class="alert alert-danger py-2 small rounded-3" style="display: none;"></div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning text-dark fw-bold rounded-3" id="btnSubmitAdminSetup">
+                            <i class="bi bi-check2-circle me-1"></i> Create Admin & Sign In
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

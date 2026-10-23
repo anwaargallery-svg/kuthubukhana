@@ -1,82 +1,50 @@
 {
-  "version": 1734,
-  "lastUpdated": 1792756098414,
+  "version": 1906,
+  "lastUpdated": 1792765515844,
   "passwords": {
-    "admin": "admin123",
+    "admin": "mahin",
     "principal": "principal123",
-    "staff": "staff123"
+    "staff": "staff123",
+    "librarian": "password123"
   },
   "librarians": [
     {
-      "id": "lib_1",
-      "username": "admin",
-      "password": "admin123",
-      "name": "Chief Administrator",
+      "id": "lib_1792762297205_313",
+      "username": "mahin",
+      "password": "mahin",
+      "name": "mahin",
       "role": "admin",
-      "createdAt": 1729600000000
-    },
-    {
-      "id": "lib_2",
-      "username": "librarian",
-      "password": "password123",
-      "name": "Assistant Librarian",
-      "role": "librarian",
-      "createdAt": 1729600000000
+      "createdAt": 1792762297206
     }
   ],
   "staff": [
     {
-      "id": "staff_1",
+      "id": "staff_1792763482082_421",
       "username": "majeed",
-      "password": "321",
-      "name": "Prof. Abdul Majeed",
-      "department": "Arabic Literature",
+      "password": "421",
+      "name": "majeed",
+      "department": "General Faculty",
       "phone": "",
       "role": "staff",
-      "createdAt": 1792665983409
+      "createdAt": 1792763482082
     },
     {
-      "id": "staff_2",
+      "id": "staff_1792763605266_161",
       "username": "maje",
-      "password": "321",
-      "name": "Prof. Majeed",
-      "department": "Islamic Studies",
+      "password": "789",
+      "name": "mahin",
+      "department": "General Faculty",
       "phone": "",
       "role": "staff",
-      "createdAt": 1792665983409
+      "createdAt": 1792763605266
     }
   ],
   "cloudSync": {
     "cloudUrl": "https://kuthubukhana.onrender.com",
     "autoSync": true,
-    "lastSynced": 1792756098414
+    "lastSynced": 1792765515844
   },
-  "books": {
-    "H-001": {
-      "title": "صحيح البخاري",
-      "author": "imam bukhari",
-      "section": "H",
-      "sectionName": "HADHEES",
-      "cover": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4bd2JEXB-aRzdUSPX1J9reK-gGHFLwtruTpRBktFeJ_UCT68GTmENBJhU&s=10",
-      "status": "Available",
-      "issuedTo": null,
-      "issueDate": null,
-      "dueDate": null,
-      "allowedDays": 10
-    },
-    "H-002": {
-      "title": "swaheeh muslim",
-      "author": "imam muslim",
-      "section": "H",
-      "sectionName": "HADHEES",
-      "cover": "https://m.media-amazon.com/images/I/81cLxtv4FrL._UF1000,1000_QL80_.jpg",
-      "status": "Available",
-      "issuedTo": null,
-      "issueDate": null,
-      "dueDate": null,
-      "allowedDays": 10
-    }
-  },
+  "books": {},
   "ledger": [
     {
       "id": 1792666082683,

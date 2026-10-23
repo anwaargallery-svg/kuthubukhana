@@ -1459,17 +1459,82 @@ function handleAddCustomClassForm(e) {
     }
 }
 
+// Open Change Passwords Modal and Load Current Configuration
+async function openChangePasswordsModal(shouldShow = true) {
+    const modalEl = document.getElementById('changePasswordsModal');
+    if (shouldShow && modalEl && typeof bootstrap !== 'undefined') {
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/auth/passwords-overview`);
+        if (res.ok) {
+            const data = await res.json();
+            const pwds = data.passwords || {};
+            const counts = data.counts || {};
+
+            const adminInput = document.getElementById('newAdminPwdInput');
+            if (adminInput) {
+                adminInput.value = '';
+                adminInput.placeholder = pwds.admin ? `Current: ${pwds.admin} (or enter new)` : 'Enter new admin password';
+            }
+            const adminBadge = document.getElementById('badgeAdminStatus');
+            if (adminBadge) {
+                adminBadge.innerText = `${counts.admins || 1} Admin Account(s)`;
+            }
+
+            const principalInput = document.getElementById('newPrincipalPwdInput');
+            if (principalInput) principalInput.value = pwds.principal || '';
+            const pBadge = document.getElementById('badgePrincipalStatus');
+            if (pBadge) {
+                pBadge.className = pwds.principal ? 'badge bg-info text-dark' : 'badge bg-secondary text-white';
+                pBadge.innerText = pwds.principal ? 'Active' : 'Disabled';
+            }
+
+            const libInput = document.getElementById('newLibrarianPwdInput');
+            if (libInput) libInput.value = pwds.librarian || '';
+            const libBadge = document.getElementById('badgeLibrarianStatus');
+            if (libBadge) {
+                libBadge.className = 'badge bg-warning text-dark';
+                libBadge.innerText = `${counts.librarians || 0} Registered`;
+            }
+
+            const teachInput = document.getElementById('newTeacherPwdInput');
+            if (teachInput) teachInput.value = pwds.teacher || '';
+            const teachBadge = document.getElementById('badgeTeacherStatus');
+            if (teachBadge) {
+                teachBadge.className = 'badge bg-success text-white';
+                teachBadge.innerText = `${counts.teachers || 0} Registered`;
+            }
+
+            const staffInput = document.getElementById('newStaffPwdInput');
+            if (staffInput) staffInput.value = pwds.staff || '';
+            const staffBadge = document.getElementById('badgeStaffFastStatus');
+            if (staffBadge) {
+                staffBadge.className = pwds.staff ? 'badge bg-secondary text-white' : 'badge bg-light text-muted border';
+                staffBadge.innerText = pwds.staff ? 'Active' : 'Disabled';
+            }
+        }
+    } catch (err) {
+        console.warn('Failed to load passwords overview:', err);
+    }
+}
+
 // Handle Admin Password Change Form
 async function handleAdminUpdatePasswords(e) {
     if (e && e.preventDefault) e.preventDefault();
-    const currentAdminPassword = document.getElementById('currentAdminPwdInput')?.value?.trim();
-    const newPrincipalPassword = document.getElementById('newPrincipalPwdInput')?.value?.trim();
-    const newStaffPassword = document.getElementById('newStaffPwdInput')?.value?.trim();
     const newAdminPassword = document.getElementById('newAdminPwdInput')?.value?.trim();
+    const newPrincipalPassword = document.getElementById('newPrincipalPwdInput')?.value?.trim();
+    const newLibrarianPassword = document.getElementById('newLibrarianPwdInput')?.value?.trim();
+    const newTeacherPassword = document.getElementById('newTeacherPwdInput')?.value?.trim();
+    const newStaffPassword = document.getElementById('newStaffPwdInput')?.value?.trim();
 
-    if (!currentAdminPassword) {
-        showAdminToast('Please enter your current Admin password to authorize changes.', 'danger', 'bi-shield-exclamation');
-        return;
+    const submitBtn = document.getElementById('btnSubmitChangePasswords');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
     }
 
     try {
@@ -1477,31 +1542,217 @@ async function handleAdminUpdatePasswords(e) {
         const res = await fetch(`${baseUrl}/api/auth/update-passwords`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ currentAdminPassword, newAdminPassword, newPrincipalPassword, newStaffPassword })
+            body: JSON.stringify({
+                newAdminPassword: newAdminPassword || undefined,
+                newPrincipalPassword,
+                newLibrarianPassword,
+                newTeacherPassword,
+                newStaffPassword
+            })
         });
         const data = await res.json();
         if (res.ok && data.success) {
-            showAdminToast('✅ Portal passwords successfully updated!', 'success', 'bi-key-fill');
+            showAdminToast('✅ Role passwords successfully updated!', 'success', 'bi-key-fill');
+            if (newAdminPassword) {
+                localStorage.setItem('library_auth_token', newAdminPassword);
+            }
+            openChangePasswordsModal(false);
             const modalEl = document.getElementById('changePasswordsModal');
             if (modalEl && typeof bootstrap !== 'undefined') {
                 const modal = bootstrap.Modal.getInstance(modalEl);
                 if (modal) modal.hide();
             }
-            document.getElementById('changePasswordsForm')?.reset();
+            loadLibrarians();
+            loadStaff();
         } else {
             showAdminToast(data.message || 'Failed to update passwords.', 'danger', 'bi-exclamation-triangle-fill');
         }
     } catch (err) {
-        showAdminToast('Network error while saving passwords.', 'danger', 'bi-x-circle-fill');
+        showAdminToast('Network error while saving passwords: ' + err.message, 'danger', 'bi-x-circle-fill');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Save Passwords';
+        }
+    }
+}
+
+// Delete / Clear Principal Passcode
+async function handleDeletePrincipalPassword() {
+    if (!confirm('Are you sure you want to delete / clear the Principal portal passcode?\n\nPrincipal portal access will be disabled until a new passcode is configured.')) {
+        return;
+    }
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/auth/principal`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showAdminToast('🗑️ Principal passcode deleted successfully!', 'info', 'bi-trash-fill');
+            const input = document.getElementById('newPrincipalPwdInput');
+            if (input) input.value = '';
+            const pBadge = document.getElementById('badgePrincipalStatus');
+            if (pBadge) {
+                pBadge.className = 'badge bg-secondary text-white';
+                pBadge.innerText = 'Disabled';
+            }
+        } else {
+            showAdminToast(data.message || 'Failed to delete Principal passcode.', 'danger', 'bi-x-circle-fill');
+        }
+    } catch (err) {
+        showAdminToast('Network error while deleting Principal passcode.', 'danger', 'bi-wifi-off');
+    }
+}
+
+// Delete / Clear Staff Fast Entry Passcode
+async function handleDeleteStaffPassword() {
+    if (!confirm('Are you sure you want to delete / clear the Staff fast-entry passcode?')) {
+        return;
+    }
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/auth/staff-password`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showAdminToast('🗑️ Staff passcode cleared successfully!', 'info', 'bi-trash-fill');
+            const input = document.getElementById('newStaffPwdInput');
+            if (input) input.value = '';
+            const staffBadge = document.getElementById('badgeStaffFastStatus');
+            if (staffBadge) {
+                staffBadge.className = 'badge bg-light text-muted border';
+                staffBadge.innerText = 'Disabled';
+            }
+        } else {
+            showAdminToast(data.message || 'Failed to clear Staff passcode.', 'danger', 'bi-x-circle-fill');
+        }
+    } catch (err) {
+        showAdminToast('Network error while clearing Staff passcode.', 'danger', 'bi-wifi-off');
+    }
+}
+
+// Master Reset: Delete all current accounts (Librarian, Principal, Teachers, Admin)
+async function handleDeleteAllAccounts() {
+    const confirmation = prompt(
+        '⚠️ DANGER ZONE: MASTER ACCOUNT DELETION\n\n' +
+        'This will permanently delete:\n' +
+        '• Current Librarian account (@librarian)\n' +
+        '• Current Administrator account (@admin)\n' +
+        '• Current Teacher accounts (@majeed, @maje, etc.)\n' +
+        '• Principal portal passcode\n\n' +
+        'Your catalog books, categories, and student records will NOT be lost.\n\n' +
+        'Type "DELETE" to confirm:'
+    );
+
+    if (confirmation !== 'DELETE' && confirmation !== 'delete') {
+        if (confirmation !== null) {
+            showAdminToast('Account deletion canceled: Confirmation word did not match.', 'secondary', 'bi-x-circle');
+        }
+        return;
+    }
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/auth/delete-all-accounts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            alert('✅ All current accounts (Librarian, Principal, Teachers, Admin) have been deleted successfully!\n\nYou will now be redirected to the login page where you can create your fresh administrator account.');
+            localStorage.removeItem('library_auth_role');
+            localStorage.removeItem('library_auth_token');
+            localStorage.removeItem('library_auth_user');
+            localStorage.removeItem('library_auth_username');
+            localStorage.removeItem('library_auth_name');
+            sessionStorage.clear();
+            window.location.replace('../../login.html');
+        } else {
+            showAdminToast(data.message || 'Failed to delete accounts.', 'danger', 'bi-x-circle-fill');
+        }
+    } catch (err) {
+        showAdminToast('Network error while deleting all accounts.', 'danger', 'bi-wifi-off');
     }
 }
 
 // ==============================================================
-// LIBRARIAN ACCOUNTS MANAGEMENT (ADMIN DASHBOARD)
+// LIBRARIAN & ADMIN ACCOUNTS MANAGEMENT (ADMIN DASHBOARD)
 // ==============================================================
+
+// Toggle Role Pill in Librarian / Admin Creation Modal
+function selectRolePill(role) {
+    const roleInput = document.getElementById('newLibRole');
+    if (roleInput) roleInput.value = role;
+
+    const btnAdmin = document.getElementById('btnRolePillAdmin');
+    const btnLibrarian = document.getElementById('btnRolePillLibrarian');
+    const formCard = document.getElementById('libFormCard');
+    const formIcon = document.getElementById('libFormIcon');
+    const titleText = document.getElementById('libFormTitleText');
+    const submitBtn = document.getElementById('btnSubmitNewLib');
+    const submitText = document.getElementById('btnSubmitNewLibText');
+
+    if (role === 'admin') {
+        if (btnAdmin) {
+            btnAdmin.className = 'btn btn-primary fw-bold py-2 active';
+        }
+        if (btnLibrarian) {
+            btnLibrarian.className = 'btn btn-outline-warning text-dark fw-bold py-2';
+        }
+        if (formCard) {
+            formCard.className = 'card border border-primary border-opacity-50 shadow-sm rounded-4 mb-4';
+            formCard.style.background = 'rgba(238, 242, 255, 0.45)';
+        }
+        if (formIcon) formIcon.className = 'bi bi-shield-plus text-primary fs-5';
+        if (titleText) titleText.innerText = 'Add or Update Administrator';
+        if (submitBtn) {
+            submitBtn.className = 'btn btn-primary fw-bold px-4 shadow-sm';
+        }
+        if (submitText) submitText.innerText = 'Create / Update Administrator';
+    } else {
+        if (btnAdmin) {
+            btnAdmin.className = 'btn btn-outline-primary fw-bold py-2';
+        }
+        if (btnLibrarian) {
+            btnLibrarian.className = 'btn btn-warning text-dark fw-bold py-2 active';
+        }
+        if (formCard) {
+            formCard.className = 'card border border-warning border-opacity-50 shadow-sm rounded-4 mb-4';
+            formCard.style.background = 'rgba(254, 243, 199, 0.3)';
+        }
+        if (formIcon) formIcon.className = 'bi bi-journal-bookmark-fill text-warning fs-5';
+        if (titleText) titleText.innerText = 'Add or Update Desk Librarian';
+        if (submitBtn) {
+            submitBtn.className = 'btn btn-warning text-dark fw-bold px-4 shadow-sm';
+        }
+        if (submitText) submitText.innerText = 'Create / Update Librarian';
+    }
+}
+
+// Open Add Administrator Modal
+function openAddAdminModal() {
+    selectRolePill('admin');
+    const modalEl = document.getElementById('librarianModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+        setTimeout(() => {
+            const input = document.getElementById('newLibName');
+            if (input) {
+                input.focus();
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 350);
+    }
+}
 
 // Open Add Librarian Modal and Focus Form Input
 function openAddLibrarianModal() {
+    selectRolePill('librarian');
     const modalEl = document.getElementById('librarianModal');
     if (modalEl && typeof bootstrap !== 'undefined') {
         const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
@@ -1570,7 +1821,11 @@ async function loadLibrarians() {
             const dateStr = lib.createdAt ? new Date(lib.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'Default';
             const roleBadge = lib.role === 'admin'
                 ? `<span class="badge bg-primary text-white fw-semibold"><i class="bi bi-shield-check me-1"></i>Chief Administrator</span>`
-                : `<span class="badge bg-warning text-dark fw-semibold"><i class="bi bi-journal-bookmark me-1"></i>Librarian (Circulation)</span>`;
+                : (lib.role === 'principal'
+                    ? `<span class="badge bg-info text-dark fw-semibold"><i class="bi bi-mortarboard-fill me-1"></i>Principal</span>`
+                    : `<span class="badge bg-warning text-dark fw-semibold"><i class="bi bi-journal-bookmark me-1"></i>Librarian (Circulation)</span>`);
+
+            const avatarBg = lib.role === 'admin' ? 'bg-primary text-white' : (lib.role === 'principal' ? 'bg-info text-dark' : 'bg-warning text-dark');
 
             const safeUsername = String(lib.username).replace(/'/g, "\\'").replace(/"/g, '&quot;');
             const safeName = String(lib.name || lib.username).replace(/'/g, "\\'").replace(/"/g, '&quot;');
@@ -1580,7 +1835,7 @@ async function loadLibrarians() {
                 <tr>
                     <td>
                         <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle bg-warning text-dark fw-bold d-flex align-items-center justify-content-center shadow-sm" style="width: 38px; height: 38px; font-size: 1.05rem;">
+                            <div class="rounded-circle ${avatarBg} fw-bold d-flex align-items-center justify-content-center shadow-sm" style="width: 38px; height: 38px; font-size: 1.05rem;">
                                 ${initial}
                             </div>
                             <div>
@@ -1618,7 +1873,7 @@ async function loadLibrarians() {
     }
 }
 
-// Create Librarian from Admin Panel Form
+// Create Librarian or Administrator from Admin Panel Form
 async function handleCreateLibrarian(e) {
     if (e && e.preventDefault) e.preventDefault();
 
@@ -1642,10 +1897,11 @@ async function handleCreateLibrarian(e) {
         return;
     }
 
+    const roleLabel = role === 'admin' ? 'Administrator' : (role === 'principal' ? 'Principal' : 'Librarian');
     const submitBtn = document.getElementById('btnSubmitNewLib');
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Creating...';
+        submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Saving...`;
     }
 
     try {
@@ -1658,18 +1914,19 @@ async function handleCreateLibrarian(e) {
 
         const data = await res.json();
         if (res.ok && data.success) {
-            showAdminToast(`✅ Librarian "${name}" (@${username}) created successfully!`, 'success', 'bi-person-check-fill');
+            showAdminToast(`✅ ${roleLabel} "${name}" (@${username}) saved successfully!`, 'success', 'bi-person-check-fill');
             document.getElementById('createLibrarianForm')?.reset();
+            selectRolePill(role);
             loadLibrarians();
         } else {
-            showAdminToast(data.message || 'Failed to create librarian account.', 'danger', 'bi-x-circle-fill');
+            showAdminToast(data.message || `Failed to save ${roleLabel} account.`, 'danger', 'bi-x-circle-fill');
         }
     } catch (err) {
-        showAdminToast('Network error while creating librarian: ' + err.message, 'danger', 'bi-wifi-off');
+        showAdminToast(`Network error while saving ${roleLabel}: ` + err.message, 'danger', 'bi-wifi-off');
     } finally {
         if (submitBtn) {
             submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Create Librarian';
+            submitBtn.innerHTML = `<i class="bi bi-check2-circle me-1"></i> <span id="btnSubmitNewLibText">Create / Update ${roleLabel}</span>`;
         }
     }
 }
@@ -1706,9 +1963,17 @@ async function promptChangeLibrarianPassword(id, username) {
     }
 }
 
-// Delete Librarian confirmation
+// Delete Librarian confirmation (Unrestricted: allows deleting any librarian or admin)
 async function handleDeleteLibrarian(id, name, username) {
-    if (!confirm(`Are you sure you want to delete librarian "${name}" (@${username})?\n\nThey will no longer be able to sign in.`)) {
+    const activeUsername = (localStorage.getItem('library_auth_username') || '').toLowerCase();
+    const isSelf = String(username || '').toLowerCase() === activeUsername;
+
+    let confirmMsg = `Are you sure you want to delete librarian "${name}" (@${username})?\n\nThey will no longer be able to sign in.`;
+    if (isSelf) {
+        confirmMsg = `⚠️ WARNING: You are deleting your CURRENT logged-in account (@${username})!\n\nIf you proceed, this administrator account will be deleted immediately and you will be signed out.\n\nAre you sure you want to proceed?`;
+    }
+
+    if (!confirm(confirmMsg)) {
         return;
     }
 
@@ -1719,13 +1984,53 @@ async function handleDeleteLibrarian(id, name, username) {
         });
         const data = await res.json();
         if (res.ok && data.success) {
-            showAdminToast(`🗑️ Librarian "${name}" deleted.`, 'info', 'bi-trash-fill');
+            if (isSelf) {
+                alert(`Account "@${username}" was deleted successfully.\nYou will now be redirected to the login page.`);
+                localStorage.removeItem('library_auth_role');
+                localStorage.removeItem('library_auth_token');
+                localStorage.removeItem('library_auth_user');
+                localStorage.removeItem('library_auth_username');
+                localStorage.removeItem('library_auth_name');
+                sessionStorage.clear();
+                window.location.replace('../../login.html');
+                return;
+            }
+            showAdminToast(`🗑️ Account "${name}" deleted.`, 'info', 'bi-trash-fill');
             loadLibrarians();
         } else {
-            showAdminToast(data.message || 'Failed to delete librarian.', 'danger', 'bi-exclamation-triangle-fill');
+            showAdminToast(data.message || 'Failed to delete account.', 'danger', 'bi-exclamation-triangle-fill');
         }
     } catch (err) {
-        showAdminToast('Network error while deleting librarian.', 'danger', 'bi-wifi-off');
+        showAdminToast('Network error while deleting account.', 'danger', 'bi-wifi-off');
+    }
+}
+
+// Delete ALL Librarians & Administrators
+async function handleDeleteAllLibrarians() {
+    if (!confirm('⚠️ Are you sure you want to delete ALL librarian and administrator accounts?\n\nAll desk staff and admin logins will be removed. You will be signed out.')) {
+        return;
+    }
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/librarians`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            alert('✅ All librarian and administrator accounts have been deleted.\nRedirecting to login page...');
+            localStorage.removeItem('library_auth_role');
+            localStorage.removeItem('library_auth_token');
+            localStorage.removeItem('library_auth_user');
+            localStorage.removeItem('library_auth_username');
+            localStorage.removeItem('library_auth_name');
+            sessionStorage.clear();
+            window.location.replace('../../login.html');
+        } else {
+            showAdminToast(data.message || 'Failed to delete librarians.', 'danger', 'bi-x-circle-fill');
+        }
+    } catch (err) {
+        showAdminToast('Network error while deleting librarians.', 'danger', 'bi-wifi-off');
     }
 }
 
@@ -1825,13 +2130,13 @@ async function handleCreateStaff(e) {
     if (e && e.preventDefault) e.preventDefault();
 
     const name = document.getElementById('newStaffName')?.value?.trim();
-    const department = document.getElementById('newStaffDept')?.value?.trim();
+    const department = document.getElementById('newStaffDept')?.value?.trim() || 'General Faculty';
     const username = document.getElementById('newStaffUsername')?.value?.trim().toLowerCase();
     const password = document.getElementById('newStaffPassword')?.value?.trim();
     const phone = document.getElementById('newStaffPhone')?.value?.trim() || '';
 
-    if (!name || !username || !password || !department) {
-        showAdminToast('Please fill out all required fields!', 'warning', 'bi-exclamation-triangle-fill');
+    if (!name || !username || !password) {
+        showAdminToast('Please fill out Name, Username, and Password!', 'warning', 'bi-exclamation-triangle-fill');
         return;
     }
 
@@ -1848,7 +2153,7 @@ async function handleCreateStaff(e) {
     const submitBtn = document.getElementById('btnSubmitNewStaff');
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Creating...';
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
     }
 
     try {
@@ -1861,14 +2166,14 @@ async function handleCreateStaff(e) {
 
         const data = await res.json();
         if (res.ok && data.success) {
-            showAdminToast(`✅ Teacher "${name}" (@${username}) registered successfully!`, 'success', 'bi-person-check-fill');
+            showAdminToast(`✅ Teacher "${name}" (@${username}) saved successfully!`, 'success', 'bi-person-check-fill');
             document.getElementById('createStaffForm')?.reset();
             loadStaff();
         } else {
-            showAdminToast(data.message || 'Failed to create teacher account.', 'danger', 'bi-x-circle-fill');
+            showAdminToast(data.message || 'Failed to save teacher account.', 'danger', 'bi-x-circle-fill');
         }
     } catch (err) {
-        showAdminToast('Network error while creating teacher: ' + err.message, 'danger', 'bi-wifi-off');
+        showAdminToast('Network error while saving teacher: ' + err.message, 'danger', 'bi-wifi-off');
     } finally {
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -1932,13 +2237,64 @@ async function handleDeleteStaff(id, name, username) {
     }
 }
 
+// Delete ALL Teachers / Staff
+async function handleDeleteAllStaff() {
+    if (!confirm('Are you sure you want to delete ALL college teacher / faculty accounts?\n\nTeachers will no longer be able to log in to the Teacher Portal.')) {
+        return;
+    }
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/staff`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showAdminToast('🗑️ All teacher accounts deleted successfully.', 'info', 'bi-trash-fill');
+            loadStaff();
+        } else {
+            showAdminToast(data.message || 'Failed to delete teachers.', 'danger', 'bi-x-circle-fill');
+        }
+    } catch (err) {
+        showAdminToast('Network error while deleting teachers.', 'danger', 'bi-wifi-off');
+    }
+}
+
 // Initialize Admin Dashboard on Load
+// System Capacity & Real-Time Server Latency Monitor
+async function refreshSystemLoad() {
+    const t0 = performance.now();
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/system/load?t=${Date.now()}`);
+        const t1 = performance.now();
+        const pingMs = Math.round(t1 - t0);
+
+        if (res.ok) {
+            const data = await res.json();
+            const pingEl = document.getElementById('systemPingValue');
+            if (pingEl) pingEl.innerText = `${pingMs} ms`;
+
+            const ramEl = document.getElementById('systemRamValue');
+            if (ramEl && data.memory) {
+                ramEl.innerText = `${data.memory.heapUsedMB} MB`;
+            }
+
+            const sseEl = document.getElementById('systemSseClients');
+            if (sseEl && data.capacity) {
+                sseEl.innerText = `${data.capacity.sseActiveClients || 1}`;
+            }
+        }
+    } catch (err) {
+        console.warn('System load check:', err);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const role = localStorage.getItem('library_auth_role');
     const user = (localStorage.getItem('library_auth_username') || '').toLowerCase();
     if (role !== 'admin' || user === 'librarian') {
-        alert('⛔ Access Denied! Only Chief Administrator accounts can access the Admin Dashboard.');
-        window.location.replace('../../../../index.html');
+        window.location.replace('../../login.html?role=admin');
         return;
     }
 
@@ -1947,13 +2303,22 @@ document.addEventListener('DOMContentLoaded', () => {
     renderStudentDirectory();
     loadLibrarians();
     loadStaff();
+    refreshSystemLoad();
+    setInterval(refreshSystemLoad, 15000);
     if (typeof updateLoggedInUserUI === 'function') updateLoggedInUserUI();
 
     // Check query params to auto-open modals
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('action') === 'addLibrarian' || window.location.hash === '#addLibrarian') {
+    const action = urlParams.get('action') || '';
+    const hash = window.location.hash || '';
+
+    if (action === 'changePasswords' || hash === '#changePasswords') {
+        openChangePasswordsModal();
+    } else if (action === 'addAdmin' || hash === '#addAdmin') {
+        openAddAdminModal();
+    } else if (action === 'addLibrarian' || hash === '#addLibrarian') {
         openAddLibrarianModal();
-    } else if (urlParams.get('action') === 'addStaff' || window.location.hash === '#addStaff') {
+    } else if (action === 'addStaff' || hash === '#addStaff') {
         openAddStaffModal();
     }
 });

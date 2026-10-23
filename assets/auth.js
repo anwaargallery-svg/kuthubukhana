@@ -31,9 +31,20 @@ function enforcePageAuth(allowedRoles) {
         return false;
     }
 
-    // STRICT CHECK 1: If page requires 'admin' (Admin Dashboard) and current user is not admin
     const currentUsername = (localStorage.getItem('library_auth_username') || '').toLowerCase();
-    if (rolesList.includes('admin') && (role !== 'admin' || currentUsername === 'librarian')) {
+    const isTrueAdmin = (role === 'admin' && currentUsername !== 'librarian');
+
+    // Admin has universal access; otherwise must be in allowedRoles
+    const isAuthorized = isTrueAdmin || rolesList.includes(role);
+
+    if (isAuthorized) {
+        return true;
+    }
+
+    // --- Access Denied Handling (User is NOT in allowedRoles) ---
+
+    // 1. Librarian attempting to access restricted Admin-Only pages
+    if ((role === 'librarian' || currentUsername === 'librarian') && rolesList.includes('admin') && !rolesList.includes('librarian')) {
         alert('⛔ Access Denied!\n\nYou are logged in as a Librarian (@' + (currentUsername || 'librarian') + ').\nOnly the Chief Administrator can access the Admin Dashboard.\n\nLibrarians have full access to Open Library circulation, Ledger, and Fine Slips.');
         const path = window.location.pathname.replace(/\\/g, '/');
         if (path.includes('lead/admin')) {
@@ -44,8 +55,8 @@ function enforcePageAuth(allowedRoles) {
         return false;
     }
 
-    // STRICT CHECK 2: If current user is a Teacher ('staff') and page is circulation / admin
-    if (role === 'staff' && !rolesList.includes('staff')) {
+    // 2. Teacher attempting to access restricted pages (e.g. Admin or Circulation Desk)
+    if (role === 'staff') {
         alert('⛔ Access Restricted to Staff Portal!\n\nYou are logged in as a College Teacher / Staff member.\nPlease view your borrowed books and history in your Teacher Portal.');
         const path = window.location.pathname.replace(/\\/g, '/');
         let staffPortalPath = 'staff-portal.html';
@@ -58,16 +69,17 @@ function enforcePageAuth(allowedRoles) {
         return false;
     }
 
-    // Admin has universal access; otherwise must be in allowedRoles
-    const isAuthorized = (role === 'admin' && currentUsername !== 'librarian') || rolesList.includes(role);
-
-    if (!isAuthorized) {
-        alert(`⛔ Access Denied: This page requires ${rolesList.join(' or ')} privileges.`);
+    // 3. Principal attempting to access restricted desk pages
+    if (role === 'principal') {
+        alert('⛔ Access Denied: This page is restricted to administrators and library desk staff.');
         window.location.replace('index.html');
         return false;
     }
 
-    return true;
+    // 4. Default Access Denied
+    alert(`⛔ Access Denied: This page requires ${rolesList.join(' or ')} privileges.`);
+    window.location.replace('index.html');
+    return false;
 }
 
 // Check role authentication before navigating from home buttons
@@ -88,7 +100,12 @@ function checkAuthAndGo(targetRole, action = null) {
                 goadmin();
             }
         } else if (token && (role === 'librarian' || currentUsername === 'librarian')) {
-            alert('⛔ Administrator Access Denied!\n\nYou are currently logged in as a Librarian (@' + (currentUsername || 'librarian') + ').\nLibrarians are not permitted to access the Admin Dashboard.\n\nIf you need Administrator access, please click "Logout" at the top-right first, then sign in with Chief Administrator credentials.');
+            if (confirm('Chief Administrator access is required for Admin Panel & Passwords.\n\nWould you like to sign in as Administrator now?')) {
+                localStorage.removeItem('library_auth_token');
+                localStorage.removeItem('library_auth_role');
+                localStorage.removeItem('library_auth_username');
+                window.location.href = `${loginPath}?role=admin`;
+            }
             return;
         } else {
             window.location.href = `${loginPath}?role=admin`;
