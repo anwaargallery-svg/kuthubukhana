@@ -18,6 +18,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
+    <script src="../auth.js"></script>
+    <script>enforcePageAuth(['admin', 'principal', 'staff', 'librarian']);</script>
     <!-- HTML5 QRCode Barcode Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script defer src="../script.js"></script>
@@ -44,6 +46,11 @@
                 <button class="btn btn-outline-success btn-sm fw-semibold" onclick="openCustomExportModal()"><i class="bi bi-file-earmark-arrow-down me-1"></i> Export Data</button>
                 <button class="btn btn-outline-secondary btn-sm fw-semibold" onclick="checkledger()"><i class="bi bi-journal-text me-1"></i> Check Ledger</button>
                 <button class="btn btn-outline-danger btn-sm fw-bold btn-close-library-toggle shadow-sm" onclick="toggleCloseLibrary()"><i class="bi bi-lock-fill me-1"></i> Close Library</button>
+                <span class="badge bg-secondary text-white py-2 px-2 fw-semibold d-flex align-items-center gap-1 shadow-sm" title="Logged in user">
+                    <i class="bi bi-person-fill text-warning"></i>
+                    <span id="currentLibrarianBadge">Chief Librarian</span>
+                </span>
+                <button class="btn btn-outline-danger btn-sm fw-bold shadow-sm" onclick="handleUserLogout()"><i class="bi bi-box-arrow-right me-1"></i> Logout</button>
             </div>
         </div>
     </nav>
@@ -168,16 +175,22 @@
                             <!-- DYNAMIC SECTION B: Staff Details (Shown when Staff Use Radio Selected) -->
                             <div id="staffFieldsSection" style="display: none;">
                                 <div class="section-title-label">
-                                    <i class="bi bi-person-workspace text-info"></i> Staff / Teacher Details
+                                    <i class="bi bi-person-workspace text-info"></i> College Teacher / Staff Identification
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-dark small text-uppercase"><i class="bi bi-mortarboard me-1 text-primary"></i> Select Registered Teacher (Auto-Fill)</label>
+                                    <select id="staffSelectDropdown" class="form-select shadow-sm fw-semibold" onchange="onTeacherDropdownSelected(this)">
+                                        <option value="">-- Choose Registered Faculty / Teacher (or enter manually below) --</option>
+                                    </select>
                                 </div>
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Staff Full Name</label>
-                                        <input type="text" id="staffNameInputMain" class="form-control" placeholder="e.g. Mr. Muhammed Hameed">
+                                        <label class="form-label fw-semibold">Teacher Full Name *</label>
+                                        <input type="text" id="staffNameInputMain" class="form-control" placeholder="e.g. Prof. Abdul Majeed">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Department / Role</label>
-                                        <input type="text" id="staffDeptInputMain" class="form-control" placeholder="e.g. Islamic Studies / Science Dept">
+                                        <label class="form-label fw-semibold">Department / Faculty *</label>
+                                        <input type="text" id="staffDeptInputMain" class="form-control" placeholder="e.g. Arabic Literature / Islamic Studies">
                                     </div>
                                 </div>
                             </div>

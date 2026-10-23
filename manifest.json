@@ -1,0 +1,25 @@
+{
+  "name": "Kuthbukhana Anwariyya - Library App",
+  "short_name": "Kuthbukhana",
+  "description": "Kuthbukhana Anwariyya College Library Management System & Executive Remote Portal",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f172a",
+  "theme_color": "#1e293b",
+  "icons": [
+    {
+      "src": "assets/images/image.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/images/image.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

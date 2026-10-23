@@ -272,6 +272,11 @@ async function syncWithBackendData() {
             if (typeof renderPrincipalView === 'function') renderPrincipalView();
             if (typeof loadOpenLibraryBooks === 'function') loadOpenLibraryBooks();
             if (typeof renderLedgerTable === 'function') renderLedgerTable();
+            if (typeof renderCategoryOptions === 'function') renderCategoryOptions();
+            if (typeof renderStudentDirectory === 'function') renderStudentDirectory();
+            if (typeof renderModalBookSearchResults === 'function') renderModalBookSearchResults();
+            if (typeof updateCloudSyncUI === 'function') updateCloudSyncUI();
+            if (typeof renderPrincipalSectionOptions === 'function') renderPrincipalSectionOptions();
         }
     } catch (err) {
         console.warn('Backend server offline or unreachable. Operating in offline mode.', err);
@@ -401,13 +406,15 @@ function getBooksData() {
 
 function saveBooksData(books) {
     localStorage.setItem('libraryBooks', JSON.stringify(books));
-    cachedBackendData.books = books;
-    fetch(`${API_BASE_URL}/api/books/batch`, {
+    if (typeof cachedBackendData !== 'undefined') {
+        cachedBackendData.books = books;
+    }
+    fetch(`${API_BASE_URL}/api/books`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(books)
     }).catch(err => {
-        fetch(`${API_BASE_URL}/api/books`, {
+        fetch(`${API_BASE_URL}/api/books/batch`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(books)
@@ -738,6 +745,8 @@ function switchCircAction(action) {
         if (studentNameInput) studentNameInput.required = false;
         if (staffNameInput) staffNameInput.required = true;
 
+        loadTeachersDropdown();
+
         if (submitBtn) {
             submitBtn.className = 'btn btn-staff w-100 py-2.5 fw-bold fs-6';
             submitBtn.innerHTML = '<i class="bi bi-person-workspace me-1"></i> Confirm Staff Checkout';
@@ -753,6 +762,40 @@ function switchCircAction(action) {
             submitBtn.className = 'btn btn-return w-100 py-2.5 fw-bold fs-6';
             submitBtn.innerHTML = '<i class="bi bi-box-arrow-in-left me-1"></i> Confirm Book Return';
         }
+    }
+}
+
+// Load registered teachers into circulation dropdown
+async function loadTeachersDropdown() {
+    const dropdown = document.getElementById('staffSelectDropdown');
+    if (!dropdown) return;
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/staff`);
+        if (!res.ok) return;
+        const staffList = await res.json();
+
+        let html = '<option value="">-- Choose Registered Faculty / Teacher (or enter manually below) --</option>';
+        staffList.forEach(s => {
+            html += `<option value="${s.username}" data-name="${s.name}" data-dept="${s.department || ''}">${s.name} (${s.department || 'Faculty'})</option>`;
+        });
+        dropdown.innerHTML = html;
+    } catch (e) {
+        console.warn('Could not load teachers dropdown:', e);
+    }
+}
+
+function onTeacherDropdownSelected(selectEl) {
+    if (!selectEl) return;
+    const selectedOpt = selectEl.options[selectEl.selectedIndex];
+    if (selectedOpt && selectedOpt.value) {
+        const name = selectedOpt.getAttribute('data-name');
+        const dept = selectedOpt.getAttribute('data-dept');
+        const nameInput = document.getElementById('staffNameInputMain');
+        const deptInput = document.getElementById('staffDeptInputMain');
+        if (nameInput) nameInput.value = name || '';
+        if (deptInput) deptInput.value = dept || '';
     }
 }
 
@@ -800,8 +843,22 @@ async function processStaffUseBookMain(e) {
     book.issuedTo = `Staff: ${staffName} (${staffDept})`;
     book.issueDate = todayStr;
     book.dueDate = 'Unlimited (Staff Use)';
+    const activeLib = (typeof getLoggedInLibrarian === 'function' ? getLoggedInLibrarian() : null)
+        || { name: localStorage.getItem('library_auth_name') || 'Chief Librarian', username: localStorage.getItem('library_auth_username') || 'admin' };
+    const currentLibName = activeLib.name || activeLib.username || 'Chief Librarian';
+    const nowTimeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    let staffUsername = '';
+    const staffDropdown = document.getElementById('staffSelectDropdown');
+    if (staffDropdown && staffDropdown.value) {
+        staffUsername = staffDropdown.value;
+    } else {
+        staffUsername = staffName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
     book.allowedDays = 999999;
     book.isStaff = true;
+    book.staffUsername = staffUsername;
     books[bookId] = book;
     saveBooksData(books);
 
@@ -809,20 +866,25 @@ async function processStaffUseBookMain(e) {
     ledger.unshift({
         id: Date.now(),
         rollNo: "STAFF",
+        staffUsername: staffUsername,
         studentName: `Staff: ${staffName}`,
         classDiv: staffDept,
         bookId: bookId,
         bookTitle: book.title,
         author: book.author || 'General',
         issueDate: todayStr,
+        issueTime: nowTimeStr,
+        issuedBy: currentLibName,
         dueDate: 'Unlimited (Staff Use)',
         allowedDays: 999999,
         returnDate: null,
+        returnTime: null,
+        returnedBy: null,
         status: "Issued (Staff Use)"
     });
     saveLedgerData(ledger);
 
-    showPopupAlert('✅ STAFF CHECKOUT SUCCESSFUL!', `Staff Member: ${staffName}\nDepartment: ${staffDept}\nBook Title: "${book.title}"\nDate: ${todayStr}\n\n✨ Staff Borrowing Policy:\n• Unlimited Books Allowed (No Quantity Limit)\n• Unlimited Duration (No Due Date / No Fines)\n\nInventory Status is now: OUT OF STOCK (Issued to Staff).`, 'success');
+    showPopupAlert('✅ STAFF CHECKOUT SUCCESSFUL!', `Staff Member: ${staffName}\nDepartment: ${staffDept}\nBook Title: "${book.title}"\nDate: ${todayStr} at ${nowTimeStr}\nIssued By Librarian: ${currentLibName}\n\n✨ Staff Borrowing Policy:\n• Unlimited Books Allowed (No Quantity Limit)\n• Unlimited Duration (No Due Date / No Fines)\n\nInventory Status is now: OUT OF STOCK (Issued to Staff).`, 'success');
     handleBookInput(bookId);
     return true;
 }
@@ -890,6 +952,11 @@ async function processIssueBook(e) {
     books[bookId] = book;
     saveBooksData(books);
 
+    const activeLib = (typeof getLoggedInLibrarian === 'function' ? getLoggedInLibrarian() : null)
+        || { name: localStorage.getItem('library_auth_name') || 'Chief Librarian', username: localStorage.getItem('library_auth_username') || 'admin' };
+    const currentLibName = activeLib.name || activeLib.username || 'Chief Librarian';
+    const nowTimeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
     // Record in Ledger
     ledger.unshift({
         id: Date.now(),
@@ -900,16 +967,20 @@ async function processIssueBook(e) {
         bookTitle: bookTitle,
         author: bookAuthor,
         issueDate: todayStr,
+        issueTime: nowTimeStr,
+        issuedBy: currentLibName,
         dueDate: dueDateStr,
         allowedDays: allowedWorkingDays,
         returnDate: null,
+        returnTime: null,
+        returnedBy: null,
         status: "Issued",
         fineAmount: 0,
         finePaid: false
     });
     saveLedgerData(ledger);
 
-    showPopupAlert('✅ BOOK ISSUED SUCCESSFULLY!', `Book: "${bookTitle}"\nIssued To: ${studentName} (Roll #${rollNo}, Class ${classDiv || 'N/A'})\nIssue Date: ${todayStr}\nDue Date: ${dueDateStr} (${allowedWorkingWeeks} Working Week(s) / ${allowedWorkingDays} Working Days allowed)\n\nBorrowing Limit: ${activeIssuedForStudent.length + 1} of ${maxAllowedBooks} book(s) used.`, 'success');
+    showPopupAlert('✅ BOOK ISSUED SUCCESSFULLY!', `Book: "${bookTitle}"\nIssued To: ${studentName} (Roll #${rollNo}, Class ${classDiv || 'N/A'})\nIssue Date: ${todayStr} at ${nowTimeStr}\nIssued By Librarian: ${currentLibName}\nDue Date: ${dueDateStr} (${allowedWorkingWeeks} Working Week(s) / ${allowedWorkingDays} Working Days allowed)\n\nBorrowing Limit: ${activeIssuedForStudent.length + 1} of ${maxAllowedBooks} book(s) used.`, 'success');
 
     // Refresh preview card
     handleBookInput(bookId);
@@ -1055,17 +1126,24 @@ async function processReturnBook() {
     saveBooksData(books);
 
     // Update Ledger Record
+    const activeLib = (typeof getLoggedInLibrarian === 'function' ? getLoggedInLibrarian() : null)
+        || { name: localStorage.getItem('library_auth_name') || 'Chief Librarian', username: localStorage.getItem('library_auth_username') || 'admin' };
+    const currentLibName = activeLib.name || activeLib.username || 'Chief Librarian';
+    const nowTimeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
     const ledger = getLedgerData();
     const record = ledger.find(r => r.bookId === bookId && (r.status === 'Issued' || r.status.includes('Issued')));
     if (record) {
         record.status = 'Returned';
         record.returnDate = todayStr;
+        record.returnTime = nowTimeStr;
+        record.returnedBy = currentLibName;
         record.fineAmount = fineInfo.fineAmount;
         record.finePaid = fineCollected;
         saveLedgerData(ledger);
     }
 
-    await showPopupAlert('✅ BOOK RETURNED SUCCESSFULLY!', `Book: "${book.title}"\nReturned By: ${previousBorrower}\nReturn Date: ${todayStr}${fineMsg}\n\nInventory Status is now: IN STOCK (Available for re-issue).`, 'success');
+    await showPopupAlert('✅ BOOK RETURNED SUCCESSFULLY!', `Book: "${book.title}"\nReturned By Borrower: ${previousBorrower}\nReturn Date: ${todayStr} at ${nowTimeStr}\nReceived By Librarian: ${currentLibName}${fineMsg}\n\nInventory Status is now: IN STOCK (Available for re-issue).`, 'success');
 
     // If fine was collected, offer instant fine slip generation
     if (fineInfo.overdueDays > 0) {
@@ -1355,7 +1433,7 @@ function renderLedgerTable() {
     });
 
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-muted"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No ledger records found matching selected class or filter.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-muted"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No ledger records found matching selected class or filter.</td></tr>`;
         return;
     }
 
@@ -1368,7 +1446,8 @@ function renderLedgerTable() {
         let statusBadgeHtml = '';
         if (isReturned) {
             let fineStr = item.fineAmount ? ` (Fine ₹${item.fineAmount} Collected)` : '';
-            statusBadgeHtml = `<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i> Returned (${item.returnDate || 'Returned'})${fineStr}</span>`;
+            let retTimeStr = item.returnTime ? ` at ${item.returnTime}` : '';
+            statusBadgeHtml = `<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i> Returned (${item.returnDate || 'Returned'}${retTimeStr})${fineStr}</span>`;
         } else if (isStaffUse) {
             statusBadgeHtml = `<span class="badge bg-info text-white shadow-sm"><i class="bi bi-person-workspace me-1"></i> Staff Use (Unlimited Duration - No Fine)</span>`;
         } else if (fineInfo.overdueDays > 0) {
@@ -1380,6 +1459,18 @@ function renderLedgerTable() {
         const dueDateDisplay = isStaffUse
             ? `<span class="badge bg-info text-white"><i class="bi bi-infinity me-1"></i>Unlimited Duration</span>`
             : (item.dueDate ? `${item.dueDate} (${allowedDays / 7} wk)` : (allowedDays ? `${allowedDays} Days` : '-'));
+
+        // Issue Date & Time display
+        const issueDateTimeDisplay = item.issueTime
+            ? `<div class="fw-semibold text-dark">${item.issueDate}</div><small class="text-muted"><i class="bi bi-clock me-1"></i>${item.issueTime}</small>`
+            : `<div class="fw-semibold text-dark">${item.issueDate}</div>`;
+
+        // Librarian display (who issued & who returned)
+        const issuedByLib = item.issuedBy || 'Staff';
+        let librarianBadgeHtml = `<span class="badge bg-light text-dark border px-2 py-1 shadow-sm"><i class="bi bi-person-check text-primary me-1"></i>${issuedByLib}</span>`;
+        if (isReturned && item.returnedBy) {
+            librarianBadgeHtml += `<div class="mt-1"><span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.72rem;"><i class="bi bi-box-arrow-in-left text-success me-1"></i>Ret: ${item.returnedBy}</span></div>`;
+        }
 
         // Fine Slip button with contextual styling
         let slipBtnHtml = '';
@@ -1405,7 +1496,8 @@ function renderLedgerTable() {
                 <td><strong>${item.studentName}</strong> <small class="text-muted">(${item.classDiv || 'Staff'})</small></td>
                 <td><code>${item.bookId}</code></td>
                 <td class="fw-semibold text-dark">${item.bookTitle}</td>
-                <td>${item.issueDate}</td>
+                <td>${issueDateTimeDisplay}</td>
+                <td>${librarianBadgeHtml}</td>
                 <td><small class="fw-bold text-secondary">${dueDateDisplay}</small></td>
                 <td>${statusBadgeHtml}</td>
                 <td class="text-center">${slipBtnHtml}</td>
@@ -1414,18 +1506,60 @@ function renderLedgerTable() {
     }).join('');
 }
 
+let lastSeenVersionNumber = null;
+let lastSeenUpdatedTime = null;
+
+async function checkVersionAndTriggerSync() {
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/version`, { cache: 'no-store' });
+        if (res.ok) {
+            const ver = await res.json();
+            if (lastSeenVersionNumber === null) {
+                lastSeenVersionNumber = ver.version;
+                lastSeenUpdatedTime = ver.lastUpdated;
+                return;
+            }
+            if (ver.version !== lastSeenVersionNumber || ver.lastUpdated !== lastSeenUpdatedTime) {
+                lastSeenVersionNumber = ver.version;
+                lastSeenUpdatedTime = ver.lastUpdated;
+                syncWithBackendData();
+            }
+        }
+    } catch (e) {}
+}
+
+function initRealtimeLiveSync() {
+    if (typeof EventSource === 'undefined') return;
+    try {
+        const evtSource = new EventSource(`${API_BASE_URL}/api/live-stream`);
+        evtSource.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'update') {
+                    syncWithBackendData();
+                }
+            } catch (e) {}
+        };
+        evtSource.onerror = function() {};
+    } catch (e) {}
+}
+
 // Auto-initialize ledger table and student lookup on load
 document.addEventListener('DOMContentLoaded', () => {
     syncWithBackendData();
+    initRealtimeLiveSync();
 
-    // Auto-sync backend data live every 5 seconds across all open devices
-    setInterval(() => {
-        syncWithBackendData();
-    }, 5000);
+    // Fast 2-second auto-sync across all open web browsers and mobile devices
+    setInterval(checkVersionAndTriggerSync, 2000);
 
     // Sync immediately when user switches back to this browser tab
     window.addEventListener('focus', () => {
         syncWithBackendData();
+    });
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            syncWithBackendData();
+        }
     });
 
     populateClassFilterDropdowns();
@@ -3538,3 +3672,10 @@ function openStandaloneFineSlipPage() {
     }
     window.open(`${target}?id=${encodeURIComponent(currentActiveFineSlipData.receiptNo)}`, '_blank');
 }
+
+// Auto-load teachers into circulation dropdown on page load
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('staffSelectDropdown')) {
+        loadTeachersDropdown();
+    }
+});

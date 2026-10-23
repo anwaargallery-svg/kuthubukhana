@@ -1193,6 +1193,12 @@ async function deleteAdminBook(id) {
     const books = fetchAdminBooks();
     delete books[id];
     saveAdminBooks(books);
+
+    const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+    fetch(`${baseUrl}/api/books/${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+    }).catch(err => console.warn('Backend delete book endpoint warning:', err));
+
     showAdminToast(`Book #${id} removed from inventory.`, "danger", "bi-trash-fill");
     renderAdminDashboard();
 }
@@ -1490,9 +1496,464 @@ async function handleAdminUpdatePasswords(e) {
     }
 }
 
+// ==============================================================
+// LIBRARIAN ACCOUNTS MANAGEMENT (ADMIN DASHBOARD)
+// ==============================================================
+
+// Open Add Librarian Modal and Focus Form Input
+function openAddLibrarianModal() {
+    const modalEl = document.getElementById('librarianModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+        setTimeout(() => {
+            const input = document.getElementById('newLibName');
+            if (input) {
+                input.focus();
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 350);
+    }
+}
+
+// Open Add Teacher / Staff Modal and Focus Form Input
+function openAddStaffModal() {
+    const modalEl = document.getElementById('staffAccountModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+        setTimeout(() => {
+            const input = document.getElementById('newStaffName');
+            if (input) {
+                input.focus();
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 350);
+    }
+}
+
+// Fetch and render librarians table
+async function loadLibrarians() {
+    const tbody = document.getElementById('librariansTableBody');
+    const badge = document.getElementById('librarianCountBadge');
+    const kpiBadge = document.getElementById('adminLibrarianCount');
+    const dashboardBadge = document.getElementById('dashboardLibrarianBadge');
+    if (!tbody) return;
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/librarians`);
+        if (!res.ok) throw new Error('Failed to fetch librarians');
+
+        const librarians = await res.json();
+        const count = librarians ? librarians.length : 0;
+
+        if (badge) badge.innerText = count;
+        if (kpiBadge) kpiBadge.innerText = count;
+        if (dashboardBadge) dashboardBadge.innerText = `${count} Registered`;
+
+        if (!librarians || librarians.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        <i class="bi bi-people display-6 d-block mb-2 text-muted"></i>
+                        No librarian accounts found. Create your first librarian account above!
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = '';
+        librarians.forEach(lib => {
+            const initial = (lib.name || lib.username || 'L').charAt(0).toUpperCase();
+            const dateStr = lib.createdAt ? new Date(lib.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'Default';
+            const roleBadge = lib.role === 'admin'
+                ? `<span class="badge bg-primary text-white fw-semibold"><i class="bi bi-shield-check me-1"></i>Chief Administrator</span>`
+                : `<span class="badge bg-warning text-dark fw-semibold"><i class="bi bi-journal-bookmark me-1"></i>Librarian (Circulation)</span>`;
+
+            const safeUsername = String(lib.username).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const safeName = String(lib.name || lib.username).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const safeId = String(lib.id).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+            html += `
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-warning text-dark fw-bold d-flex align-items-center justify-content-center shadow-sm" style="width: 38px; height: 38px; font-size: 1.05rem;">
+                                ${initial}
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">${lib.name || lib.username}</div>
+                                <small class="text-muted" style="font-size: 0.75rem;">ID: ${lib.id}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border px-2 py-1 fw-bold font-monospace">@${lib.username}</span>
+                    </td>
+                    <td>${roleBadge}</td>
+                    <td><small class="text-muted">${dateStr}</small></td>
+                    <td class="text-end">
+                        <button class="btn btn-outline-primary btn-sm fw-semibold me-1 shadow-sm" type="button" onclick="promptChangeLibrarianPassword('${safeId}', '${safeUsername}')" title="Change Password">
+                            <i class="bi bi-key-fill me-1"></i> Change Pwd
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm shadow-sm" type="button" onclick="handleDeleteLibrarian('${safeId}', '${safeName}', '${safeUsername}')" title="Delete Librarian">
+                            <i class="bi bi-trash-fill"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+    } catch (err) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-danger py-3">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Unable to load librarians: ${err.message}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Create Librarian from Admin Panel Form
+async function handleCreateLibrarian(e) {
+    if (e && e.preventDefault) e.preventDefault();
+
+    const name = document.getElementById('newLibName')?.value?.trim();
+    const username = document.getElementById('newLibUsername')?.value?.trim().toLowerCase();
+    const password = document.getElementById('newLibPassword')?.value?.trim();
+    const role = document.getElementById('newLibRole')?.value || 'librarian';
+
+    if (!name || !username || !password) {
+        showAdminToast('Please fill out all required fields!', 'warning', 'bi-exclamation-triangle-fill');
+        return;
+    }
+
+    if (username.length < 2) {
+        showAdminToast('Username must be at least 2 characters.', 'warning', 'bi-exclamation-circle');
+        return;
+    }
+
+    if (password.length < 3) {
+        showAdminToast('Password must be at least 3 characters.', 'warning', 'bi-key');
+        return;
+    }
+
+    const submitBtn = document.getElementById('btnSubmitNewLib');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Creating...';
+    }
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/librarians`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, username, password, role })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showAdminToast(`✅ Librarian "${name}" (@${username}) created successfully!`, 'success', 'bi-person-check-fill');
+            document.getElementById('createLibrarianForm')?.reset();
+            loadLibrarians();
+        } else {
+            showAdminToast(data.message || 'Failed to create librarian account.', 'danger', 'bi-x-circle-fill');
+        }
+    } catch (err) {
+        showAdminToast('Network error while creating librarian: ' + err.message, 'danger', 'bi-wifi-off');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Create Librarian';
+        }
+    }
+}
+
+// Prompt to change a librarian's password
+async function promptChangeLibrarianPassword(id, username) {
+    const newPassword = prompt(`Enter a new password for librarian @${username}:`);
+    if (newPassword === null) return;
+    const trimmed = newPassword.trim();
+    if (!trimmed) {
+        showAdminToast('Password cannot be empty.', 'warning', 'bi-exclamation-circle');
+        return;
+    }
+    if (trimmed.length < 3) {
+        showAdminToast('Password must be at least 3 characters long.', 'warning', 'bi-exclamation-circle');
+        return;
+    }
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/librarians/${encodeURIComponent(id)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: trimmed })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showAdminToast(`✅ Password for @${username} updated!`, 'success', 'bi-key-fill');
+        } else {
+            showAdminToast(data.message || 'Failed to update password.', 'danger', 'bi-x-circle-fill');
+        }
+    } catch (err) {
+        showAdminToast('Network error updating password.', 'danger', 'bi-wifi-off');
+    }
+}
+
+// Delete Librarian confirmation
+async function handleDeleteLibrarian(id, name, username) {
+    if (!confirm(`Are you sure you want to delete librarian "${name}" (@${username})?\n\nThey will no longer be able to sign in.`)) {
+        return;
+    }
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/librarians/${encodeURIComponent(id)}`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showAdminToast(`🗑️ Librarian "${name}" deleted.`, 'info', 'bi-trash-fill');
+            loadLibrarians();
+        } else {
+            showAdminToast(data.message || 'Failed to delete librarian.', 'danger', 'bi-exclamation-triangle-fill');
+        }
+    } catch (err) {
+        showAdminToast('Network error while deleting librarian.', 'danger', 'bi-wifi-off');
+    }
+}
+
+// ==============================================================
+// COLLEGE TEACHERS / STAFF ACCOUNTS (ADMIN DASHBOARD)
+// ==============================================================
+
+// Fetch and render teachers/staff table
+async function loadStaff() {
+    const tbody = document.getElementById('staffTableBody');
+    const badge = document.getElementById('staffCountBadge');
+    const kpiBadge = document.getElementById('adminStaffCount');
+    const dashboardBadge = document.getElementById('dashboardStaffBadge');
+    if (!tbody) return;
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/staff`);
+        if (!res.ok) throw new Error('Failed to fetch teachers');
+
+        const staffList = await res.json();
+        const count = staffList ? staffList.length : 0;
+
+        if (badge) badge.innerText = count;
+        if (kpiBadge) kpiBadge.innerText = count;
+        if (dashboardBadge) dashboardBadge.innerText = `${count} Registered`;
+
+        if (!staffList || staffList.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        <i class="bi bi-person-workspace display-6 d-block mb-2 text-muted"></i>
+                        No college teacher accounts found. Register your first teacher account above!
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = '';
+        staffList.forEach(st => {
+            const initial = (st.name || st.username || 'T').charAt(0).toUpperCase();
+            const safeUsername = String(st.username).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const safeName = String(st.name || st.username).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const safeId = String(st.id).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+            const takenBooksBadge = st.takenBooksCount > 0
+                ? `<span class="badge bg-warning text-dark fw-bold px-2 py-1"><i class="bi bi-journal-check me-1"></i>${st.takenBooksCount} Book(s) Taken</span>`
+                : `<span class="badge bg-light text-muted border px-2 py-1">0 Books</span>`;
+
+            html += `
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-success text-white fw-bold d-flex align-items-center justify-content-center shadow-sm" style="width: 38px; height: 38px; font-size: 1.05rem;">
+                                ${initial}
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">${st.name || st.username}</div>
+                                <small class="text-muted" style="font-size: 0.75rem;">${st.phone ? '<i class="bi bi-telephone me-1"></i>' + st.phone : 'Faculty'}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border px-2 py-1 fw-bold font-monospace">@${st.username}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-info text-dark fw-semibold">${st.department || 'General Faculty'}</span>
+                    </td>
+                    <td>${takenBooksBadge}</td>
+                    <td class="text-end">
+                        <button class="btn btn-outline-primary btn-sm fw-semibold me-1 shadow-sm" type="button" onclick="promptChangeStaffPassword('${safeId}', '${safeUsername}')" title="Change Password">
+                            <i class="bi bi-key-fill me-1"></i> Change Pwd
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm shadow-sm" type="button" onclick="handleDeleteStaff('${safeId}', '${safeName}', '${safeUsername}')" title="Delete Teacher">
+                            <i class="bi bi-trash-fill"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+    } catch (err) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-danger py-3">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Unable to load teachers: ${err.message}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Create Teacher / Staff from Admin Panel Form
+async function handleCreateStaff(e) {
+    if (e && e.preventDefault) e.preventDefault();
+
+    const name = document.getElementById('newStaffName')?.value?.trim();
+    const department = document.getElementById('newStaffDept')?.value?.trim();
+    const username = document.getElementById('newStaffUsername')?.value?.trim().toLowerCase();
+    const password = document.getElementById('newStaffPassword')?.value?.trim();
+    const phone = document.getElementById('newStaffPhone')?.value?.trim() || '';
+
+    if (!name || !username || !password || !department) {
+        showAdminToast('Please fill out all required fields!', 'warning', 'bi-exclamation-triangle-fill');
+        return;
+    }
+
+    if (username.length < 2) {
+        showAdminToast('Username must be at least 2 characters.', 'warning', 'bi-exclamation-circle');
+        return;
+    }
+
+    if (password.length < 3) {
+        showAdminToast('Password must be at least 3 characters.', 'warning', 'bi-key');
+        return;
+    }
+
+    const submitBtn = document.getElementById('btnSubmitNewStaff');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Creating...';
+    }
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/staff`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, username, password, department, phone })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showAdminToast(`✅ Teacher "${name}" (@${username}) registered successfully!`, 'success', 'bi-person-check-fill');
+            document.getElementById('createStaffForm')?.reset();
+            loadStaff();
+        } else {
+            showAdminToast(data.message || 'Failed to create teacher account.', 'danger', 'bi-x-circle-fill');
+        }
+    } catch (err) {
+        showAdminToast('Network error while creating teacher: ' + err.message, 'danger', 'bi-wifi-off');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Create Teacher Account';
+        }
+    }
+}
+
+// Prompt to change a teacher's password
+async function promptChangeStaffPassword(id, username) {
+    const newPassword = prompt(`Enter a new password for teacher @${username}:`);
+    if (newPassword === null) return;
+    const trimmed = newPassword.trim();
+    if (!trimmed) {
+        showAdminToast('Password cannot be empty.', 'warning', 'bi-exclamation-circle');
+        return;
+    }
+    if (trimmed.length < 3) {
+        showAdminToast('Password must be at least 3 characters long.', 'warning', 'bi-exclamation-circle');
+        return;
+    }
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/staff/${encodeURIComponent(id)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: trimmed })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showAdminToast(`✅ Password for teacher @${username} updated!`, 'success', 'bi-key-fill');
+        } else {
+            showAdminToast(data.message || 'Failed to update password.', 'danger', 'bi-x-circle-fill');
+        }
+    } catch (err) {
+        showAdminToast('Network error updating password.', 'danger', 'bi-wifi-off');
+    }
+}
+
+// Delete Teacher confirmation
+async function handleDeleteStaff(id, name, username) {
+    if (!confirm(`Are you sure you want to delete teacher "${name}" (@${username})?\n\nThey will no longer be able to log in to the Teacher Portal.`)) {
+        return;
+    }
+
+    try {
+        const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : ((window.location.protocol && window.location.protocol.startsWith('http')) ? window.location.origin : 'http://localhost:5000');
+        const res = await fetch(`${baseUrl}/api/staff/${encodeURIComponent(id)}`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showAdminToast(`🗑️ Teacher "${name}" deleted.`, 'info', 'bi-trash-fill');
+            loadStaff();
+        } else {
+            showAdminToast(data.message || 'Failed to delete teacher.', 'danger', 'bi-exclamation-triangle-fill');
+        }
+    } catch (err) {
+        showAdminToast('Network error while deleting teacher.', 'danger', 'bi-wifi-off');
+    }
+}
+
 // Initialize Admin Dashboard on Load
 document.addEventListener('DOMContentLoaded', () => {
+    const role = localStorage.getItem('library_auth_role');
+    const user = (localStorage.getItem('library_auth_username') || '').toLowerCase();
+    if (role !== 'admin' || user === 'librarian') {
+        alert('⛔ Access Denied! Only Chief Administrator accounts can access the Admin Dashboard.');
+        window.location.replace('../../../../index.html');
+        return;
+    }
+
     renderCategoryOptions();
     renderAdminDashboard();
     renderStudentDirectory();
+    loadLibrarians();
+    loadStaff();
+    if (typeof updateLoggedInUserUI === 'function') updateLoggedInUserUI();
+
+    // Check query params to auto-open modals
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'addLibrarian' || window.location.hash === '#addLibrarian') {
+        openAddLibrarianModal();
+    } else if (urlParams.get('action') === 'addStaff' || window.location.hash === '#addStaff') {
+        openAddStaffModal();
+    }
 });

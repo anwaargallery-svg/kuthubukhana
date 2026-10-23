@@ -1,15 +1,55 @@
 {
-  "version": 6,
-  "lastUpdated": 1791806529851,
+  "version": 1734,
+  "lastUpdated": 1792756098414,
   "passwords": {
     "admin": "admin123",
     "principal": "principal123",
     "staff": "staff123"
   },
+  "librarians": [
+    {
+      "id": "lib_1",
+      "username": "admin",
+      "password": "admin123",
+      "name": "Chief Administrator",
+      "role": "admin",
+      "createdAt": 1729600000000
+    },
+    {
+      "id": "lib_2",
+      "username": "librarian",
+      "password": "password123",
+      "name": "Assistant Librarian",
+      "role": "librarian",
+      "createdAt": 1729600000000
+    }
+  ],
+  "staff": [
+    {
+      "id": "staff_1",
+      "username": "majeed",
+      "password": "321",
+      "name": "Prof. Abdul Majeed",
+      "department": "Arabic Literature",
+      "phone": "",
+      "role": "staff",
+      "createdAt": 1792665983409
+    },
+    {
+      "id": "staff_2",
+      "username": "maje",
+      "password": "321",
+      "name": "Prof. Majeed",
+      "department": "Islamic Studies",
+      "phone": "",
+      "role": "staff",
+      "createdAt": 1792665983409
+    }
+  ],
   "cloudSync": {
-    "cloudUrl": "",
-    "lastSynced": null,
-    "autoSync": true
+    "cloudUrl": "https://kuthubukhana.onrender.com",
+    "autoSync": true,
+    "lastSynced": 1792756098414
   },
   "books": {
     "H-001": {
@@ -18,10 +58,10 @@
       "section": "H",
       "sectionName": "HADHEES",
       "cover": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4bd2JEXB-aRzdUSPX1J9reK-gGHFLwtruTpRBktFeJ_UCT68GTmENBJhU&s=10",
-      "status": "Issued",
-      "issuedTo": "SUHAIL (Roll #2)",
-      "issueDate": "2026-10-07",
-      "dueDate": "2026-10-18",
+      "status": "Available",
+      "issuedTo": null,
+      "issueDate": null,
+      "dueDate": null,
       "allowedDays": 10
     },
     "H-002": {
@@ -37,7 +77,24 @@
       "allowedDays": 10
     }
   },
-  "ledger": [],
+  "ledger": [
+    {
+      "id": 1792666082683,
+      "rollNo": "18",
+      "studentName": "suhail",
+      "classDiv": "9",
+      "bookId": "H-001",
+      "bookTitle": "صحيح البخاري",
+      "author": "imam bukhari",
+      "issueDate": "2026-10-22",
+      "dueDate": "2026-11-02",
+      "allowedDays": 10,
+      "returnDate": "2026-10-22",
+      "status": "Returned",
+      "fineAmount": 0,
+      "finePaid": false
+    }
+  ],
   "categories": {
     "H": "HADHEES",
     "PS": "PSYCOLOGY",
@@ -51,7 +108,7 @@
     "PH": "PROPHETS",
     "BS": "BALA SAHITYAM",
     "ST": "STORY",
-    "STUDY": "SY",
+    "SY": "STUDY",
     "SJ": "SUNNATH JAMAATH",
     "WH": "WORLD HISTORY",
     "PK": "PRASANGA KALA",
@@ -61,7 +118,16 @@
     "LR": "LITRATUR",
     "BH": "BIOGRAPHY"
   },
-  "students": [],
-  "classes": [],
+  "students": [
+    {
+      "rollNo": "15",
+      "name": "mursal",
+      "classDiv": "muthawal"
+    }
+  ],
+  "classes": [
+    "8",
+    "9"
+  ],
   "isLibraryClosed": false
 }

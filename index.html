@@ -7,6 +7,11 @@
     <title>Library Management System</title>
     <link rel="icon" type="image/png" href="assets/images/image.png">
     <link rel="apple-touch-icon" href="assets/images/image.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e293b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kuthbukhana">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -17,6 +22,8 @@
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
     <script src="assets/auth.js"></script>
+    <script src="assets/mobile-pwa.js"></script>
+    <script>enforcePageAuth(['admin', 'principal', 'staff', 'librarian']);</script>
     <script defer src="assets/script.js"></script>
 </head>
 
@@ -32,9 +39,13 @@
                 <button class="btn btn-outline-primary btn-sm fw-bold shadow-sm" onclick="openConnectModal()">
                     <i class="bi bi-qr-code-scan me-1"></i> Connect Phone
                 </button>
-                <a href="assets/subpages/login.html" class="btn btn-outline-dark btn-sm fw-bold shadow-sm">
-                    <i class="bi bi-box-arrow-in-right me-1"></i> Staff Login
-                </a>
+                <span class="badge bg-dark text-white py-2 px-3 fw-semibold d-flex align-items-center gap-1 shadow-sm" title="Logged in user">
+                    <i class="bi bi-person-badge-fill text-warning"></i>
+                    <span id="currentLibrarianBadge">Chief Librarian</span>
+                </span>
+                <button class="btn btn-outline-danger btn-sm fw-bold shadow-sm" onclick="handleUserLogout()">
+                    <i class="bi bi-box-arrow-right me-1"></i> Logout
+                </button>
                 <button class="btn btn-outline-danger btn-sm fw-bold btn-close-library-toggle shadow-sm" onclick="toggleCloseLibrary()">
                     <i class="bi bi-lock-fill me-1"></i> Close Library
                 </button>
@@ -58,7 +69,7 @@
                 <button class="btn btn-warning text-dark fw-bold shadow-sm" onclick="openfineslip()"><i class="bi bi-receipt-cutoff"></i> Fine Slip</button>
                 <button class="btn btn-info text-white fw-bold shadow-sm" onclick="checkAuthAndGo('principal')"><i class="bi bi-person-badge"></i> Principal Portal</button>
                 <button class="btn btn-danger fw-bold shadow-sm" onclick="checkAuthAndGo('admin')"><i class="bi bi-speedometer2"></i> Admin Panel</button>
-                <button class="btn btn-light text-primary fw-bold shadow-sm" onclick="checkAuthAndGo('staff')"><i class="bi bi-phone"></i> Fast Data Entry</button>
+                <button class="btn btn-warning text-dark fw-bold shadow-sm" onclick="checkAuthAndGo('staff')"><i class="bi bi-mortarboard-fill"></i> Teacher Portal</button>
             </div>
         </div>
     </div>
@@ -88,6 +99,15 @@
                                 <i class="bi bi-clipboard me-1"></i> Copy
                             </button>
                         </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mb-3">
+                        <button class="btn btn-success fw-bold shadow-sm py-2 pwa-install-btn" style="display: none;" onclick="installPWA()">
+                            <i class="bi bi-phone-fill me-1"></i> Install Mobile App (Instant PWA)
+                        </button>
+                        <a href="/download/app" class="btn btn-dark fw-bold shadow-sm py-2 border border-secondary" download>
+                            <i class="bi bi-android2 text-success me-1"></i> Download Android Mobile App (.APK)
+                        </a>
                     </div>
 
                     <div class="alert alert-info py-2 small text-start mb-0">

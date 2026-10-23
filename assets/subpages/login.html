@@ -4,12 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portal Login - Kuthbukhana Anwariyya</title>
+    <title>Login - Kuthbukhana Anwariyya</title>
     <link rel="icon" type="image/png" href="../images/image.png">
     <link rel="apple-touch-icon" href="../images/image.png">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1e293b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kuthbukhana">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -17,6 +22,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
+    <script src="../mobile-pwa.js"></script>
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -25,213 +31,325 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 30px 15px;
+            padding: 24px 16px;
             color: #f8fafc;
         }
 
         .login-card {
-            background: rgba(30, 41, 59, 0.85);
+            background: rgba(30, 41, 59, 0.94);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 22px;
+            box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.55);
             width: 100%;
-            max-width: 520px;
-            overflow: hidden;
+            max-width: 440px;
+            padding: 32px 28px;
         }
 
-        .role-pill {
-            cursor: pointer;
-            border-radius: 14px;
-            border: 2px solid rgba(255, 255, 255, 0.08);
-            background: rgba(15, 23, 42, 0.6);
-            padding: 14px 18px;
-            transition: all 0.25s ease;
+        .role-tabs {
             display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .role-pill:hover {
-            border-color: rgba(37, 99, 235, 0.5);
-            background: rgba(37, 99, 235, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .role-pill.active {
-            border-color: #3b82f6;
-            background: rgba(37, 99, 235, 0.2);
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
-        }
-
-        .role-icon {
-            width: 44px;
-            height: 44px;
+            background: rgba(15, 23, 42, 0.7);
             border-radius: 12px;
+            padding: 4px;
+            gap: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .role-tab {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            padding: 8px 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            border-radius: 9px;
+            transition: all 0.2s ease;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 1.35rem;
-            flex-shrink: 0;
+            gap: 3px;
+            cursor: pointer;
         }
 
-        .btn-portal-login {
+        .role-tab i {
+            font-size: 1rem;
+        }
+
+        .role-tab:hover {
+            color: #f8fafc;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .role-tab.active {
+            background: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+        }
+
+        .form-control, .form-select {
+            background: rgba(15, 23, 42, 0.65);
+            border: 1.5px solid rgba(255, 255, 255, 0.14);
+            color: #ffffff;
+            border-radius: 10px;
+            padding: 11px 14px;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(15, 23, 42, 0.95);
+            border-color: #3b82f6;
+            color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+
+        .form-control::placeholder {
+            color: #64748b;
+        }
+
+        .input-group-text {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1.5px solid rgba(255, 255, 255, 0.14);
+            color: #94a3b8;
+            border-radius: 10px 0 0 10px;
+        }
+
+        .btn-toggle-eye {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1.5px solid rgba(255, 255, 255, 0.14);
+            border-left: none;
+            color: #94a3b8;
+            border-radius: 0 10px 10px 0;
+            cursor: pointer;
+        }
+
+        .btn-toggle-eye:hover {
+            color: #ffffff;
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .btn-login {
             background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             border: none;
             color: white;
             font-weight: 700;
-            padding: 14px 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5);
+            padding: 12px 18px;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.45);
             transition: all 0.2s ease;
         }
 
-        .btn-portal-login:hover {
+        .btn-login:hover {
             background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-            transform: translateY(-2px);
+            transform: translateY(-1px);
             color: white;
         }
 
-        .password-input-wrap {
-            position: relative;
-        }
-
-        .password-input-wrap input {
-            background: rgba(15, 23, 42, 0.8);
-            border: 1.5px solid rgba(255, 255, 255, 0.15);
-            color: #ffffff;
-            border-radius: 12px;
-            padding: 14px 16px;
-            font-size: 1rem;
-        }
-
-        .password-input-wrap input:focus {
-            background: rgba(15, 23, 42, 0.95);
-            border-color: #3b82f6;
-            color: #ffffff;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
+        .role-desc-pill {
+            background: rgba(37, 99, 235, 0.12);
+            border: 1px solid rgba(37, 99, 235, 0.25);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 0.74rem;
+            color: #93c5fd;
         }
     </style>
 </head>
 
 <body>
-    <div class="login-card p-4 p-sm-5">
+    <div class="login-card">
         <!-- Logo & Header -->
-        <div class="text-center mb-4">
-            <img src="../images/image.png" alt="Library Logo" class="rounded-circle border border-2 border-primary mb-3 shadow" style="width: 75px; height: 75px; object-fit: cover;">
-            <h2 class="h4 fw-bold text-white mb-1">Kuthbukhana Anwariyya</h2>
-            <p class="text-white-50 small mb-0">Unified Multi-Device Authentication Portal</p>
+        <div class="text-center mb-3">
+            <img src="../images/image.png" alt="Library Logo" class="rounded-circle border border-2 border-primary mb-2 shadow" style="width: 56px; height: 56px; object-fit: cover;">
+            <h1 class="h5 fw-bold text-white mb-0">Kuthbukhana Anwariyya</h1>
+            <p class="text-white-50 small mb-0">Library Authentication Portal</p>
         </div>
 
-        <!-- Role Select Options -->
-        <label class="form-label text-white-50 small fw-bold text-uppercase mb-2">Select Your Role</label>
-        <div class="d-flex flex-column gap-2 mb-4">
-            <!-- Principal Role -->
-            <div class="role-pill active" onclick="selectRole('principal', this)">
-                <div class="role-icon" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">
-                    <i class="bi bi-person-badge-fill"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <div class="fw-bold text-white">Principal / Executive Portal</div>
-                    <small class="text-white-50" style="font-size: 0.75rem;">Remote monitoring, lock switch, catalog inspection</small>
-                </div>
-                <i class="bi bi-check-circle-fill text-primary fs-5 check-icon"></i>
-            </div>
-
-            <!-- Admin Role -->
-            <div class="role-pill" onclick="selectRole('admin', this)">
-                <div class="role-icon" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">
-                    <i class="bi bi-speedometer2"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <div class="fw-bold text-white">Chief Librarian / Admin</div>
-                    <small class="text-white-50" style="font-size: 0.75rem;">Full library inventory, students, categories, ledger</small>
-                </div>
-                <i class="bi bi-circle text-white-50 fs-5 check-icon"></i>
-            </div>
-
-            <!-- Fast Data Entry Staff Role -->
-            <div class="role-pill" onclick="selectRole('staff', this)">
-                <div class="role-icon" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">
-                    <i class="bi bi-phone-fill"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <div class="fw-bold text-white">Multi-Device Data Entry Operator</div>
-                    <small class="text-white-50" style="font-size: 0.75rem;">Rapid book cataloging from smartphones & PCs</small>
-                </div>
-                <i class="bi bi-circle text-white-50 fs-5 check-icon"></i>
-            </div>
+        <!-- Role Selector Tabs: 4 distinct roles -->
+        <div class="role-tabs mb-3">
+            <button type="button" class="role-tab active" onclick="setRole('admin', this)">
+                <i class="bi bi-shield-lock-fill"></i>
+                <span>Admin</span>
+            </button>
+            <button type="button" class="role-tab" onclick="setRole('librarian', this)">
+                <i class="bi bi-journal-bookmark-fill"></i>
+                <span>Librarian</span>
+            </button>
+            <button type="button" class="role-tab" onclick="setRole('staff', this)">
+                <i class="bi bi-person-workspace"></i>
+                <span>Teacher</span>
+            </button>
+            <button type="button" class="role-tab" onclick="setRole('principal', this)">
+                <i class="bi bi-mortarboard-fill"></i>
+                <span>Principal</span>
+            </button>
         </div>
 
-        <!-- Password Form -->
-        <form id="portalLoginForm" onsubmit="handleLoginSubmit(event)">
-            <input type="hidden" id="selectedRoleInput" value="principal">
-            
+        <!-- Role Description Pill -->
+        <div id="roleDescPill" class="role-desc-pill text-center mb-3">
+            <i class="bi bi-info-circle me-1"></i>
+            <span id="roleDescText">Full system administration, dashboard & configuration</span>
+        </div>
+
+        <!-- Inline Error Alert -->
+        <div id="loginErrorAlert" class="alert alert-danger py-2 px-3 small rounded-3 mb-3" style="display: none;"></div>
+
+        <!-- Login Form -->
+        <form id="simpleLoginForm" onsubmit="handleLoginSubmit(event)">
+            <input type="hidden" id="selectedRoleInput" value="admin">
+
+            <!-- Username (Displayed for Admin, Librarian & Teacher) -->
+            <div class="mb-3" id="groupUsername">
+                <label for="portalUsername" class="form-label text-white-50 small fw-bold text-uppercase d-flex justify-content-between">
+                    <span id="labelUsername">Username</span>
+                    <span id="hintUsername" class="text-info" style="font-size: 0.72rem; text-transform: none;"></span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" class="form-control" id="portalUsername" placeholder="Enter username (admin, librarian, teacher)..." value="" autocomplete="username" oninput="detectRoleFromUsername(this.value)">
+                </div>
+            </div>
+
+            <!-- Password -->
             <div class="mb-4">
                 <label for="portalPassword" class="form-label text-white-50 small fw-bold text-uppercase d-flex justify-content-between">
-                    <span>Password / Access Code</span>
-                    <span id="roleDefaultHint" class="text-info" style="text-transform: none; font-size: 0.72rem;">Default: principal</span>
+                    <span id="labelPassword">Password</span>
+                    <span id="hintPassword" class="text-info" style="font-size: 0.72rem; text-transform: none;">Default: admin123</span>
                 </label>
-                <div class="password-input-wrap">
-                    <input type="password" class="form-control" id="portalPassword" placeholder="Enter password..." required autofocus autocomplete="current-password">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-key"></i></span>
+                    <input type="password" class="form-control border-end-0" id="portalPassword" placeholder="Enter password..." required autofocus autocomplete="current-password">
+                    <button type="button" class="btn btn-toggle-eye px-3" onclick="togglePasswordVisibility('portalPassword', this)" title="Show/Hide Password">
+                        <i class="bi bi-eye"></i>
+                    </button>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-portal-login w-100 d-flex justify-content-center align-items-center gap-2 mb-3">
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-login w-100 d-flex justify-content-center align-items-center gap-2 mb-3" id="btnLoginSubmit">
                 <i class="bi bi-box-arrow-in-right fs-5"></i>
-                <span class="fs-6">SIGN IN TO DASHBOARD</span>
+                <span id="loginSubmitBtnText">Sign In as Administrator</span>
             </button>
+
         </form>
 
-        <!-- Quick Links -->
-        <div class="d-flex justify-content-between align-items-center pt-3 border-top border-secondary border-opacity-25 small">
-            <a href="../../index.html" class="text-white-50 text-decoration-none">
-                <i class="bi bi-arrow-left me-1"></i> Back to Home
-            </a>
-            <a href="openlibrary.html" class="text-info text-decoration-none">
+        <!-- Footer -->
+        <div class="d-flex justify-content-between align-items-center pt-3 border-top border-secondary border-opacity-25 small mt-3">
+            <span class="text-white-50" style="font-size: 0.75rem;">
+                <i class="bi bi-shield-check text-success me-1"></i> Role Protected
+            </span>
+            <a href="openlibrary.html" class="text-info text-decoration-none" style="font-size: 0.75rem;">
                 <i class="bi bi-book me-1"></i> Public Catalog OPAC
             </a>
-        </div>
     </div>
 
-    <!-- Alert Modal / Script -->
     <script>
         const API_BASE_URL = (window.location.protocol && window.location.protocol.startsWith('http'))
             ? window.location.origin
             : 'http://localhost:5000';
 
-        const roleDestinations = {
-            principal: 'lead/principal/principal.html',
-            admin: 'lead/admin/admin.html',
-            staff: 'data-entry.html'
-        };
-
-        const defaultHints = {
-            principal: 'Default: principal or 1234',
-            admin: 'Default: admin or admin123',
-            staff: 'Default: staff or 1234'
-        };
-
-        function selectRole(role, element) {
-            document.querySelectorAll('.role-pill').forEach(el => {
-                el.classList.remove('active');
-                const check = el.querySelector('.check-icon');
-                if (check) {
-                    check.className = 'bi bi-circle text-white-50 fs-5 check-icon';
-                }
-            });
-
-            element.classList.add('active');
-            const check = element.querySelector('.check-icon');
-            if (check) {
-                check.className = 'bi bi-check-circle-fill text-primary fs-5 check-icon';
+        const roleConfig = {
+            admin: {
+                title: 'Administrator',
+                desc: 'Full system administration, dashboard & configuration (Superuser)',
+                defaultUser: 'admin',
+                pwdHint: 'Default: admin123',
+                btnText: 'Sign In as Administrator',
+                showUser: true
+            },
+            librarian: {
+                title: 'Librarian',
+                desc: 'Daily desk circulation, book issue/return, ledger & fine slips (Admin Dashboard Restricted)',
+                defaultUser: 'librarian',
+                pwdHint: 'Default: password123',
+                btnText: 'Sign In as Librarian',
+                showUser: true
+            },
+            staff: {
+                title: 'College Teacher / Staff',
+                desc: 'College faculty portal: View your taken books & borrowing history',
+                defaultUser: 'majeed',
+                pwdHint: 'Default: 321 or staff123',
+                btnText: 'Sign In to Teacher Portal',
+                showUser: true
+            },
+            principal: {
+                title: 'Principal',
+                desc: 'Executive monitoring, stock audit & emergency closure control',
+                defaultUser: '',
+                pwdHint: 'Default: principal123',
+                btnText: 'Sign In to Principal Portal',
+                showUser: false
             }
+        };
+
+        // Live role auto-detection as the user types username
+        function detectRoleFromUsername(val) {
+            const u = (val || '').trim().toLowerCase();
+            const tabs = document.querySelectorAll('.role-tab');
+            if (u === 'librarian') {
+                if (tabs[1]) setRoleVisual('librarian', tabs[1]);
+            } else if (u === 'admin') {
+                if (tabs[0]) setRoleVisual('admin', tabs[0]);
+            } else if (u === 'majeed' || u === 'maje') {
+                if (tabs[2]) setRoleVisual('staff', tabs[2]);
+            }
+        }
+
+        function setRoleVisual(role, btn) {
+            document.querySelectorAll('.role-tab').forEach(el => el.classList.remove('active'));
+            if (btn) btn.classList.add('active');
 
             document.getElementById('selectedRoleInput').value = role;
-            const hintEl = document.getElementById('roleDefaultHint');
-            if (hintEl) hintEl.innerText = defaultHints[role] || '';
+            const config = roleConfig[role] || roleConfig.admin;
 
+            const descText = document.getElementById('roleDescText');
+            if (descText) descText.innerText = config.desc;
+
+            const hintPwd = document.getElementById('hintPassword');
+            const labelPwd = document.getElementById('labelPassword');
+            const btnText = document.getElementById('loginSubmitBtnText');
+
+            if (hintPwd) hintPwd.innerText = config.pwdHint;
+            if (btnText) btnText.innerText = config.btnText;
+            if (labelPwd) labelPwd.innerText = (role === 'staff' ? 'Teacher Password' : 'Password');
+        }
+
+        function setRole(role, btn) {
+            document.querySelectorAll('.role-tab').forEach(el => el.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            document.getElementById('selectedRoleInput').value = role;
+            const config = roleConfig[role] || roleConfig.admin;
+
+            const descText = document.getElementById('roleDescText');
+            if (descText) descText.innerText = config.desc;
+
+            const groupUser = document.getElementById('groupUsername');
+            const hintPwd = document.getElementById('hintPassword');
+            const labelPwd = document.getElementById('labelPassword');
+            const btnText = document.getElementById('loginSubmitBtnText');
+            const uInput = document.getElementById('portalUsername');
+
+            if (hintPwd) hintPwd.innerText = config.pwdHint;
+            if (btnText) btnText.innerText = config.btnText;
+
+            if (config.showUser) {
+                if (groupUser) groupUser.style.display = 'block';
+                if (labelPwd) labelPwd.innerText = (role === 'staff' ? 'Teacher Password' : 'Password');
+                if (uInput && !uInput.value.trim()) {
+                    if (role === 'admin') uInput.value = 'admin';
+                    else if (role === 'librarian') uInput.value = 'librarian';
+                    else if (role === 'staff') uInput.value = 'majeed';
+                }
+            } else {
+                if (groupUser) groupUser.style.display = 'none';
+                if (labelPwd) labelPwd.innerText = 'Principal Passcode';
+            }
+
+            hideError();
             const pwdInput = document.getElementById('portalPassword');
             if (pwdInput) {
                 pwdInput.value = '';
@@ -239,72 +357,230 @@
             }
         }
 
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+            }
+        }
+
+        function showError(msg) {
+            const alertBox = document.getElementById('loginErrorAlert');
+            if (alertBox) {
+                alertBox.innerText = msg;
+                alertBox.style.display = 'block';
+            }
+        }
+
+        function hideError() {
+            const alertBox = document.getElementById('loginErrorAlert');
+            if (alertBox) alertBox.style.display = 'none';
+        }
+
+        // Submit Login Form
         async function handleLoginSubmit(e) {
             if (e && e.preventDefault) e.preventDefault();
+            hideError();
 
             const role = document.getElementById('selectedRoleInput').value;
+            const usernameInput = document.getElementById('portalUsername');
+            const username = (role !== 'principal' && usernameInput) ? usernameInput.value.trim() : '';
             const password = document.getElementById('portalPassword').value.trim();
 
-            if (!password) {
-                alert('Please enter your password.');
+            if (role !== 'principal' && !username) {
+                showError('Please enter your username.');
+                if (usernameInput) usernameInput.focus();
                 return;
             }
 
+            if (!password) {
+                showError('Please enter your password.');
+                return;
+            }
+
+            const submitBtn = document.getElementById('btnLoginSubmit');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Signing in...';
+            }
+
             try {
+                // If username is 'librarian', force role in payload to 'librarian'
+                const effectiveRole = (username.toLowerCase() === 'librarian') ? 'librarian' : role;
+                const payload = (effectiveRole !== 'principal')
+                    ? { role: effectiveRole, username, password }
+                    : { role: effectiveRole, password };
+
                 const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ role, password })
+                    body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    localStorage.setItem('library_auth_role', role);
-                    localStorage.setItem('library_auth_token', data.token || 'auth_token');
-                    localStorage.setItem('library_auth_time', Date.now());
+                    const loggedInUser = data.user || {};
+                    const returnedRole = String(data.role || '').toLowerCase();
+                    const returnedUsername = String(loggedInUser.username || username).toLowerCase();
 
-                    const redirectUrl = sessionStorage.getItem('redirect_after_login');
-                    sessionStorage.removeItem('redirect_after_login');
+                    // ==============================================================
+                    // 1. STRICT LIBRARIAN ENFORCEMENT (CANNOT ACCESS ADMIN DASHBOARD)
+                    // ==============================================================
+                    if (returnedUsername === 'librarian' || returnedRole === 'librarian') {
+                        localStorage.setItem('library_auth_role', 'librarian');
+                        localStorage.setItem('library_auth_token', data.token || 'lib_token');
+                        localStorage.setItem('library_auth_time', Date.now());
+                        localStorage.setItem('library_auth_user', JSON.stringify(loggedInUser));
+                        localStorage.setItem('library_auth_username', loggedInUser.username || 'librarian');
+                        localStorage.setItem('library_auth_name', loggedInUser.name || 'Assistant Librarian');
 
-                    const targetUrl = redirectUrl || roleDestinations[role] || 'lead/principal/principal.html';
-                    window.location.href = targetUrl;
+                        // Wipe any stored admin redirect URL so librarian never enters admin
+                        sessionStorage.removeItem('redirect_after_login');
+
+                        const wasAdminAttempt = window.location.search.includes('role=admin');
+                        if (wasAdminAttempt) {
+                            alert('⛔ Access Denied!\n\nYou have logged in as a Librarian (@' + (loggedInUser.username || 'librarian') + ').\nLibrarians are not permitted to access the Admin Dashboard.\n\nOnly the Chief Administrator can access the Admin Dashboard.\nRedirecting you to the Library Circulation Desk...');
+                        }
+
+                        // Always route to main library circulation page
+                        window.location.href = '../../index.html';
+                        return;
+                    }
+
+                    // ==============================================================
+                    // 2. COLLEGE TEACHER / STAFF ENFORCEMENT (TEACHER PORTAL)
+                    // ==============================================================
+                    if (returnedRole === 'staff') {
+                        localStorage.setItem('library_auth_role', 'staff');
+                        localStorage.setItem('library_auth_token', data.token || 'staff_token');
+                        localStorage.setItem('library_auth_time', Date.now());
+                        localStorage.setItem('library_auth_user', JSON.stringify(loggedInUser));
+                        localStorage.setItem('library_auth_username', loggedInUser.username || username);
+                        localStorage.setItem('library_auth_name', loggedInUser.name || 'Teacher / Staff');
+
+                        sessionStorage.removeItem('redirect_after_login');
+                        window.location.href = 'staff-portal.html';
+                        return;
+                    }
+
+                    // ==============================================================
+                    // 3. PRINCIPAL ENFORCEMENT (PRINCIPAL PORTAL)
+                    // ==============================================================
+                    if (returnedRole === 'principal') {
+                        localStorage.setItem('library_auth_role', 'principal');
+                        localStorage.setItem('library_auth_token', data.token || 'principal_token');
+                        localStorage.setItem('library_auth_time', Date.now());
+                        localStorage.setItem('library_auth_username', 'principal');
+                        localStorage.setItem('library_auth_name', 'Principal');
+
+                        const redirectUrl = sessionStorage.getItem('redirect_after_login');
+                        sessionStorage.removeItem('redirect_after_login');
+                        window.location.href = redirectUrl || 'lead/principal/principal.html';
+                        return;
+                    }
+
+                    // ==============================================================
+                    // 4. CHIEF ADMINISTRATOR ENFORCEMENT (ADMIN DASHBOARD)
+                    // ==============================================================
+                    if (returnedRole === 'admin' && returnedUsername !== 'librarian') {
+                        localStorage.setItem('library_auth_role', 'admin');
+                        localStorage.setItem('library_auth_token', data.token || 'admin_token');
+                        localStorage.setItem('library_auth_time', Date.now());
+                        localStorage.setItem('library_auth_user', JSON.stringify(loggedInUser));
+                        localStorage.setItem('library_auth_username', loggedInUser.username || 'admin');
+                        localStorage.setItem('library_auth_name', loggedInUser.name || 'Chief Administrator');
+
+                        const redirectUrl = sessionStorage.getItem('redirect_after_login');
+                        sessionStorage.removeItem('redirect_after_login');
+                        window.location.href = redirectUrl || 'lead/admin/admin.html';
+                        return;
+                    }
+
+                    showError('Unexpected role returned by server.');
                 } else {
-                    alert('Incorrect password for ' + role.toUpperCase() + '. Please try again.');
+                    const errData = await response.json().catch(() => ({}));
+                    showError(errData.message || 'Incorrect credentials. Please try again.');
                 }
             } catch (err) {
                 // Offline fallback checking
-                const validPasswords = {
-                    principal: ['principal', 'principal123', '1234', 'cyber'],
-                    admin: ['admin', 'admin123', 'cyber', '1234'],
-                    staff: ['staff', 'staff123', '1234', 'operator']
-                };
+                const u = (username || '').toLowerCase();
+                const p = password;
 
-                if (validPasswords[role] && validPasswords[role].includes(password)) {
-                    localStorage.setItem('library_auth_role', role);
-                    localStorage.setItem('library_auth_token', 'offline_auth_' + role);
+                // Librarian offline
+                if (u === 'librarian' && (p === 'password123' || p === '1234' || p === 'librarian')) {
+                    localStorage.setItem('library_auth_role', 'librarian');
+                    localStorage.setItem('library_auth_token', 'offline_lib');
                     localStorage.setItem('library_auth_time', Date.now());
-
-                    const redirectUrl = sessionStorage.getItem('redirect_after_login');
+                    localStorage.setItem('library_auth_username', 'librarian');
+                    localStorage.setItem('library_auth_name', 'Assistant Librarian');
                     sessionStorage.removeItem('redirect_after_login');
 
-                    const targetUrl = redirectUrl || roleDestinations[role] || 'lead/principal/principal.html';
-                    window.location.href = targetUrl;
-                } else {
-                    alert('Incorrect password. Please try again.');
+                    if (window.location.search.includes('role=admin')) {
+                        alert('⛔ Access Denied!\n\nYou logged in as a Librarian.\nLibrarians cannot access the Admin Dashboard.\n\nRedirecting to Library...');
+                    }
+                    window.location.href = '../../index.html';
+                    return;
+                }
+
+                // Staff offline
+                if ((u === 'majeed' || u === 'maje') && (p === '321' || p === 'staff' || p === 'staff123')) {
+                    localStorage.setItem('library_auth_role', 'staff');
+                    localStorage.setItem('library_auth_token', 'offline_staff');
+                    localStorage.setItem('library_auth_time', Date.now());
+                    localStorage.setItem('library_auth_username', u);
+                    localStorage.setItem('library_auth_name', 'Prof. Abdul Majeed');
+                    sessionStorage.removeItem('redirect_after_login');
+                    window.location.href = 'staff-portal.html';
+                    return;
+                }
+
+                // Principal offline
+                if (p === 'principal123' || p === 'principal' || role === 'principal') {
+                    localStorage.setItem('library_auth_role', 'principal');
+                    localStorage.setItem('library_auth_token', 'offline_principal');
+                    localStorage.setItem('library_auth_time', Date.now());
+                    localStorage.setItem('library_auth_username', 'principal');
+                    localStorage.setItem('library_auth_name', 'Principal');
+                    window.location.href = 'lead/principal/principal.html';
+                    return;
+                }
+
+                // Admin offline (ONLY IF u === 'admin')
+                if (u === 'admin' && (p === 'admin123' || p === 'admin' || p === 'cyber')) {
+                    localStorage.setItem('library_auth_role', 'admin');
+                    localStorage.setItem('library_auth_token', 'offline_admin');
+                    localStorage.setItem('library_auth_time', Date.now());
+                    localStorage.setItem('library_auth_username', 'admin');
+                    localStorage.setItem('library_auth_name', 'Chief Administrator');
+                    const redirectUrl = sessionStorage.getItem('redirect_after_login');
+                    sessionStorage.removeItem('redirect_after_login');
+                    window.location.href = redirectUrl || 'lead/admin/admin.html';
+                    return;
+                }
+
+                showError('Incorrect credentials. Please try again.');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    const config = roleConfig[role] || roleConfig.admin;
+                    submitBtn.innerHTML = `<i class="bi bi-box-arrow-in-right fs-5"></i> <span>${config.btnText}</span>`;
                 }
             }
         }
 
-        // Auto-select role based on URL query param (e.g. ?role=principal)
+        // Auto-select role based on URL query param (e.g. ?role=principal or ?role=staff or ?role=librarian)
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const targetRole = params.get('role');
-            if (targetRole && roleDestinations[targetRole]) {
-                const pills = document.querySelectorAll('.role-pill');
-                if (targetRole === 'principal' && pills[0]) selectRole('principal', pills[0]);
-                else if (targetRole === 'admin' && pills[1]) selectRole('admin', pills[1]);
-                else if (targetRole === 'staff' && pills[2]) selectRole('staff', pills[2]);
-            }
+            const tabs = document.querySelectorAll('.role-tab');
+            if (targetRole === 'principal' && tabs[3]) setRole('principal', tabs[3]);
+            else if (targetRole === 'staff' && tabs[2]) setRole('staff', tabs[2]);
+            else if (targetRole === 'librarian' && tabs[1]) setRole('librarian', tabs[1]);
+            else if (tabs[0]) setRole('admin', tabs[0]);
         });
     </script>
 </body>

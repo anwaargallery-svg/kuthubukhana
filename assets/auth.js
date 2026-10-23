@@ -13,12 +13,10 @@ function enforcePageAuth(allowedRoles) {
     const token = localStorage.getItem('library_auth_token');
 
     const rolesList = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
-    // Admin always has universal access
-    const isAuthorized = token && role && (role === 'admin' || rolesList.includes(role));
 
-    if (!isAuthorized) {
+    // Check if user is logged in
+    if (!token || !role) {
         sessionStorage.setItem('redirect_after_login', window.location.href);
-
         const path = window.location.pathname.replace(/\\/g, '/');
         let loginPath = 'login.html';
         if (path.includes('lead/admin') || path.includes('lead/principal')) {
@@ -28,27 +26,93 @@ function enforcePageAuth(allowedRoles) {
         } else {
             loginPath = 'assets/subpages/login.html';
         }
-
         const targetRole = rolesList[0] || 'admin';
         window.location.replace(`${loginPath}?role=${encodeURIComponent(targetRole)}`);
         return false;
     }
+
+    // STRICT CHECK 1: If page requires 'admin' (Admin Dashboard) and current user is not admin
+    const currentUsername = (localStorage.getItem('library_auth_username') || '').toLowerCase();
+    if (rolesList.includes('admin') && (role !== 'admin' || currentUsername === 'librarian')) {
+        alert('⛔ Access Denied!\n\nYou are logged in as a Librarian (@' + (currentUsername || 'librarian') + ').\nOnly the Chief Administrator can access the Admin Dashboard.\n\nLibrarians have full access to Open Library circulation, Ledger, and Fine Slips.');
+        const path = window.location.pathname.replace(/\\/g, '/');
+        if (path.includes('lead/admin')) {
+            window.location.replace('../../../../index.html');
+        } else {
+            window.location.replace('index.html');
+        }
+        return false;
+    }
+
+    // STRICT CHECK 2: If current user is a Teacher ('staff') and page is circulation / admin
+    if (role === 'staff' && !rolesList.includes('staff')) {
+        alert('⛔ Access Restricted to Staff Portal!\n\nYou are logged in as a College Teacher / Staff member.\nPlease view your borrowed books and history in your Teacher Portal.');
+        const path = window.location.pathname.replace(/\\/g, '/');
+        let staffPortalPath = 'staff-portal.html';
+        if (path.includes('lead/admin') || path.includes('lead/principal')) {
+            staffPortalPath = '../../staff-portal.html';
+        } else if (!path.includes('subpages')) {
+            staffPortalPath = 'assets/subpages/staff-portal.html';
+        }
+        window.location.replace(staffPortalPath);
+        return false;
+    }
+
+    // Admin has universal access; otherwise must be in allowedRoles
+    const isAuthorized = (role === 'admin' && currentUsername !== 'librarian') || rolesList.includes(role);
+
+    if (!isAuthorized) {
+        alert(`⛔ Access Denied: This page requires ${rolesList.join(' or ')} privileges.`);
+        window.location.replace('index.html');
+        return false;
+    }
+
     return true;
 }
 
 // Check role authentication before navigating from home buttons
-function checkAuthAndGo(targetRole) {
+function checkAuthAndGo(targetRole, action = null) {
     const role = localStorage.getItem('library_auth_role');
     const token = localStorage.getItem('library_auth_token');
+    const currentUsername = (localStorage.getItem('library_auth_username') || '').toLowerCase();
 
-    if (token && role && (role === 'admin' || role === targetRole)) {
-        if (targetRole === 'principal') goprincipal();
-        else if (targetRole === 'admin') goadmin();
-        else if (targetRole === 'staff') godataentry();
-    } else {
-        const path = window.location.pathname.replace(/\\/g, '/');
-        const loginPath = (path.includes('subpages')) ? 'login.html' : 'assets/subpages/login.html';
-        window.location.href = `${loginPath}?role=${encodeURIComponent(targetRole)}`;
+    const path = window.location.pathname.replace(/\\/g, '/');
+    const loginPath = (path.includes('subpages')) ? 'login.html' : 'assets/subpages/login.html';
+
+    if (targetRole === 'admin') {
+        if (token && role === 'admin' && currentUsername !== 'librarian') {
+            if (action) {
+                let adminPath = path.includes('subpages') ? 'lead/admin/admin.html' : 'assets/subpages/lead/admin/admin.html';
+                window.location.href = `${adminPath}?action=${encodeURIComponent(action)}`;
+            } else {
+                goadmin();
+            }
+        } else if (token && (role === 'librarian' || currentUsername === 'librarian')) {
+            alert('⛔ Administrator Access Denied!\n\nYou are currently logged in as a Librarian (@' + (currentUsername || 'librarian') + ').\nLibrarians are not permitted to access the Admin Dashboard.\n\nIf you need Administrator access, please click "Logout" at the top-right first, then sign in with Chief Administrator credentials.');
+            return;
+        } else {
+            window.location.href = `${loginPath}?role=admin`;
+        }
+        return;
+    }
+
+    if (targetRole === 'staff') {
+        let staffPath = (path.includes('subpages')) ? 'staff-portal.html' : 'assets/subpages/staff-portal.html';
+        if (token && (role === 'staff' || role === 'admin')) {
+            window.location.href = staffPath;
+        } else {
+            window.location.href = `${loginPath}?role=staff`;
+        }
+        return;
+    }
+
+    if (targetRole === 'principal') {
+        if (token && (role === 'principal' || role === 'admin')) {
+            goprincipal();
+        } else {
+            window.location.href = `${loginPath}?role=principal`;
+        }
+        return;
     }
 }
 
@@ -57,6 +121,9 @@ function handleUserLogout() {
     localStorage.removeItem('library_auth_token');
     localStorage.removeItem('library_auth_role');
     localStorage.removeItem('library_auth_time');
+    localStorage.removeItem('library_auth_user');
+    localStorage.removeItem('library_auth_username');
+    localStorage.removeItem('library_auth_name');
 
     const path = window.location.pathname.replace(/\\/g, '/');
     let loginPath = 'login.html';
@@ -70,6 +137,39 @@ function handleUserLogout() {
     window.location.href = loginPath;
 }
 
+// Helper: Get logged-in librarian / teacher details
+function getLoggedInLibrarian() {
+    try {
+        const raw = localStorage.getItem('library_auth_user');
+        if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    const role = localStorage.getItem('library_auth_role') || 'librarian';
+    let defaultName = 'Librarian';
+    if (role === 'admin') defaultName = 'Chief Administrator';
+    else if (role === 'staff') defaultName = 'Teacher / Staff';
+    else if (role === 'principal') defaultName = 'Principal';
+
+    return {
+        username: localStorage.getItem('library_auth_username') || role,
+        name: localStorage.getItem('library_auth_name') || defaultName,
+        role: role
+    };
+}
+
+// Update UI badges showing current librarian / teacher name
+function updateLoggedInUserUI() {
+    const user = getLoggedInLibrarian();
+    const badge = document.getElementById('currentLibrarianBadge');
+    if (badge && user) {
+        let roleTag = user.role === 'admin' ? '(Admin)' : (user.role === 'librarian' ? '(Librarian)' : (user.role === 'staff' ? '(Teacher)' : ''));
+        badge.innerText = `${user.name || user.username} ${roleTag}`.trim();
+    }
+    const usernameSpan = document.getElementById('currentLibrarianUsernameBadge');
+    if (usernameSpan && user && user.username) {
+        usernameSpan.innerText = '@' + user.username;
+    }
+}
+
 // 3. Cloud Sync Client Manager
 let cloudSyncState = {
     cloudUrl: '',
@@ -77,18 +177,21 @@ let cloudSyncState = {
     status: 'checking' // 'online-synced', 'offline', 'syncing', 'unconfigured'
 };
 
+const DEFAULT_ONLINE_URL = 'https://kuthubukhana.onrender.com';
+
 // Check cloud sync status from local server
 async function fetchCloudSyncStatus() {
     try {
         const res = await fetch(`${AUTH_API_BASE}/api/cloud-sync/config`);
         if (res.ok) {
             const data = await res.json();
-            cloudSyncState.cloudUrl = data.cloudUrl || localStorage.getItem('cloud_website_url') || '';
+            cloudSyncState.cloudUrl = data.cloudUrl || localStorage.getItem('cloud_website_url') || DEFAULT_ONLINE_URL;
             cloudSyncState.lastSynced = data.lastSynced;
+            cloudSyncState.status = 'online-synced';
             updateCloudSyncUI();
         }
     } catch (e) {
-        cloudSyncState.cloudUrl = localStorage.getItem('cloud_website_url') || '';
+        cloudSyncState.cloudUrl = localStorage.getItem('cloud_website_url') || DEFAULT_ONLINE_URL;
         updateCloudSyncUI();
     }
 }
@@ -102,14 +205,7 @@ async function executeCloudSync(showToast = true) {
         return;
     }
 
-    const cloudUrl = cloudSyncState.cloudUrl || localStorage.getItem('cloud_website_url');
-    if (!cloudUrl) {
-        cloudSyncState.status = 'unconfigured';
-        updateCloudSyncUI();
-        if (showToast) openCloudSyncModal();
-        return;
-    }
-
+    const cloudUrl = cloudSyncState.cloudUrl || localStorage.getItem('cloud_website_url') || DEFAULT_ONLINE_URL;
     cloudSyncState.status = 'syncing';
     updateCloudSyncUI();
 
@@ -151,6 +247,20 @@ function updateCloudSyncUI() {
     const pill = document.getElementById('cloudSyncStatusPill');
     if (!pill) return;
 
+    const isOnlineHosted = window.location.hostname.includes('render.com') ||
+        window.location.hostname.includes('kuthubukhana') ||
+        (window.location.protocol.startsWith('http') &&
+         !window.location.hostname.includes('localhost') &&
+         !window.location.hostname.includes('127.0.0.1') &&
+         !window.location.hostname.startsWith('192.168.'));
+
+    if (isOnlineHosted) {
+        pill.className = 'badge bg-success text-white py-2 px-3 fw-semibold shadow-sm';
+        pill.innerHTML = `<i class="bi bi-globe-americas me-1"></i> Web Live (Auto-Updated)`;
+        pill.title = 'Online Cloud Website. Automatically reflects latest App changes in real time.';
+        return;
+    }
+
     if (!cloudSyncState.cloudUrl) {
         pill.className = 'badge bg-secondary text-white py-2 px-3 fw-semibold cursor-pointer shadow-sm';
         pill.innerHTML = `<i class="bi bi-cloud-slash me-1"></i> Setup Cloud Link`;
@@ -167,14 +277,14 @@ function updateCloudSyncUI() {
 
     if (cloudSyncState.status === 'syncing') {
         pill.className = 'badge bg-info text-dark py-2 px-3 fw-semibold shadow-sm';
-        pill.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status"></span> Syncing...`;
+        pill.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status"></span> Syncing to Web...`;
         return;
     }
 
     pill.className = 'badge bg-success text-white py-2 px-3 fw-semibold cursor-pointer shadow-sm';
     const timeStr = cloudSyncState.lastSynced ? new Date(cloudSyncState.lastSynced).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live';
     pill.innerHTML = `<i class="bi bi-cloud-check-fill me-1"></i> Cloud Synced (${timeStr})`;
-    pill.title = `Connected to ${cloudSyncState.cloudUrl}. App and Website are synchronized.`;
+    pill.title = `Connected to ${cloudSyncState.cloudUrl}. App changes are automatically synced to the web!`;
 }
 
 // Open Cloud Sync Configuration Modal
@@ -300,4 +410,5 @@ setInterval(() => {
 
 document.addEventListener('DOMContentLoaded', () => {
     fetchCloudSyncStatus();
+    updateLoggedInUserUI();
 });
