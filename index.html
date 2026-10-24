@@ -5,13 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Library Management System</title>
-    <link rel="icon" type="image/png" href="assets/images/image.png">
-    <link rel="apple-touch-icon" href="assets/images/image.png">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1e293b">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Kuthbukhana">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -21,34 +14,21 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
-    <script src="assets/auth.js"></script>
-    <script src="assets/mobile-pwa.js"></script>
-    <script>enforcePageAuth(['admin', 'principal', 'staff', 'librarian']);</script>
     <script defer src="assets/script.js"></script>
 </head>
 
 <body>
-    <nav class="navbar navbar-light bg-light shadow-sm sticky-top">
+    <nav class="navbar navbar-light bg-light shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold" href="index.html">
                 <img class="img-fluid rounded-circle" src="assets/images/image.png" alt="Library Logo">
                 <span>Kuthbukhana Anwariyya</span>
             </a>
-            <div class="d-flex gap-2 flex-wrap align-items-center">
-                <span id="cloudSyncStatusPill" onclick="openCloudSyncModal()" style="cursor: pointer;"></span>
-                <button class="btn btn-outline-primary btn-sm fw-bold shadow-sm" onclick="openConnectModal()">
-                    <i class="bi bi-qr-code-scan me-1"></i> Connect Phone
-                </button>
-                <span class="badge bg-dark text-white py-2 px-3 fw-semibold d-flex align-items-center gap-1 shadow-sm" title="Logged in user">
-                    <i class="bi bi-person-badge-fill text-warning"></i>
-                    <span id="currentLibrarianBadge">Chief Librarian</span>
-                </span>
-                <button class="btn btn-outline-danger btn-sm fw-bold shadow-sm" onclick="handleUserLogout()">
-                    <i class="bi bi-box-arrow-right me-1"></i> Logout
-                </button>
+            <div class="d-flex align-items-center gap-2 flex-wrap ms-auto">
                 <button class="btn btn-outline-danger btn-sm fw-bold btn-close-library-toggle shadow-sm" onclick="toggleCloseLibrary()">
                     <i class="bi bi-lock-fill me-1"></i> Close Library
                 </button>
+                <div id="navAuthControls"></div>
             </div>
         </div>
     </nav>
@@ -61,66 +41,14 @@
             </div>
             <div class="text">
                 <h1 class="fw-bold">Kuthbukhana Anwariyya</h1>
-                <p class="text-white-50 mt-1 mb-0 fs-6">Library Management System • Desktop App & Multi-Device Cloud Sync</p>
             </div>
             <div class="buttons d-flex gap-2 flex-wrap justify-content-center">
                 <button class="btn btn-primary" onclick="openlibrary()"><i class="bi bi-book"></i> Open Library</button>
                 <button class="check btn btn-success" onclick="checkledger()"><i class="bi bi-journal-text"></i> Check Ledger</button>
-                <button class="btn btn-warning text-dark fw-bold shadow-sm" onclick="openfineslip()"><i class="bi bi-receipt-cutoff"></i> Fine Slip</button>
-                <button class="btn btn-info text-white fw-bold shadow-sm" onclick="checkAuthAndGo('principal')"><i class="bi bi-person-badge"></i> Principal Portal</button>
-                <button class="btn btn-danger fw-bold shadow-sm" onclick="checkAuthAndGo('admin')"><i class="bi bi-speedometer2"></i> Admin Panel</button>
-                <button class="btn btn-warning text-dark fw-bold shadow-sm" onclick="checkAuthAndGo('staff')"><i class="bi bi-mortarboard-fill"></i> Teacher Portal</button>
-                <button class="btn btn-dark text-warning fw-bold shadow-sm border border-warning" onclick="checkAuthAndGo('admin', 'changePasswords')"><i class="bi bi-key-fill"></i> Change Passwords</button>
-                <button class="btn btn-dark text-white fw-semibold shadow-sm border border-secondary" onclick="checkAuthAndGo('admin', 'addLibrarian')"><i class="bi bi-people-fill"></i> Manage Staff & Admins</button>
+                <button class="btn btn-info text-white fw-bold shadow-sm" onclick="goprincipal()"><i class="bi bi-person-badge"></i> Principal View</button>
+                <button class="btn btn-danger fw-bold shadow-sm" onclick="goadmin()"><i class="bi bi-speedometer2"></i> Admin Dashboard</button>
             </div>
-        </div>
-    </div>
 
-    <!-- Phone Access & QR Code Modal -->
-    <div class="modal fade" id="connectModal" tabindex="-1" aria-labelledby="connectModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4">
-                <div class="modal-header bg-dark text-white rounded-top-4">
-                    <h5 class="modal-title fw-bold" id="connectModalLabel">
-                        <i class="bi bi-phone-fill text-primary me-2"></i>Connect Mobile Phones & PCs
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4 text-center">
-                    <p class="text-muted small mb-3">To open this library on your smartphone, scan this QR code or type the link into your phone's browser:</p>
-                    
-                    <div class="p-3 bg-light rounded-4 d-inline-block border shadow-sm mb-3">
-                        <img id="indexQrCodeImg" src="" alt="QR Code" style="width: 200px; height: 200px; object-fit: contain;">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Local Wi-Fi Network Address</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control text-center fw-bold" id="indexNetworkUrlInput" readonly value="Loading...">
-                            <button class="btn btn-outline-primary" type="button" onclick="copyIndexNetworkUrl()">
-                                <i class="bi bi-clipboard me-1"></i> Copy
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="d-grid gap-2 mb-3">
-                        <button class="btn btn-success fw-bold shadow-sm py-2 pwa-install-btn" style="display: none;" onclick="installPWA()">
-                            <i class="bi bi-phone-fill me-1"></i> Install Mobile App (Instant PWA)
-                        </button>
-                        <a href="/download/app" class="btn btn-dark fw-bold shadow-sm py-2 border border-secondary" download>
-                            <i class="bi bi-android2 text-success me-1"></i> Download Android Mobile App (.APK)
-                        </a>
-                    </div>
-
-                    <div class="alert alert-info py-2 small text-start mb-0">
-                        <i class="bi bi-shield-check me-1"></i>
-                        <strong>Principal Remote Control:</strong> The Principal can monitor stock, audit ledger, and close/open the library remotely from any phone or computer.
-                    </div>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary w-100 rounded-3" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
         </div>
     </div>
 </body>

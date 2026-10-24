@@ -450,1003 +450,12 @@ body {
     display: inline-block;
 }
 
-/* ===================================================
-   OFFICIAL LIBRARY FINE SLIP & RECEIPT STYLES
-=================================================== */
-
-.fine-slip-modal-dialog {
-    max-width: 860px;
-}
-
-.fine-slip-wrapper {
-    background: #f1f5f9;
-    padding: 24px;
-    border-radius: 12px;
-    display: flex;
-    justify-content: center;
-}
-
-.fine-slip-card {
-    background: #ffffff;
-    width: 100%;
-    max-width: 680px;
-    border: 2px solid #0f172a;
-    border-radius: 10px;
-    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
-    padding: 28px 32px;
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: #0f172a;
-    position: relative;
-    overflow: hidden;
-}
-
-/* Watermark background on fine slip */
-.fine-slip-card::before {
-    content: '';
-    position: absolute;
-    top: 52%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 320px;
-    height: 320px;
-    background-image: url('images/image.png');
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0.045;
-    pointer-events: none;
-    z-index: 0;
-}
-
-.slip-header {
-    position: relative;
-    z-index: 1;
-    border-bottom: 2px solid #0f172a;
-    padding-bottom: 14px;
-    margin-bottom: 16px;
-}
-
-.slip-header-logo-row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.slip-logo {
-    width: 65px;
-    height: 65px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #0f172a;
-    flex-shrink: 0;
-}
-
-.slip-header-text {
-    flex-grow: 1;
-}
-
-.slip-library-title {
-    font-size: 1.35rem;
-    font-weight: 800;
-    margin: 0;
-    color: #0f172a;
-    letter-spacing: -0.3px;
-    text-transform: uppercase;
-    line-height: 1.2;
-}
-
-.slip-library-subtitle {
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: #475569;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    margin-top: 2px;
-}
-
-.slip-doc-badge {
-    display: inline-block;
-    background: #0f172a;
-    color: #ffffff;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 3px 12px;
-    border-radius: 4px;
-    margin-top: 6px;
-    letter-spacing: 1px;
-}
-
-.slip-meta-strip {
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px;
-    font-size: 0.8rem;
-    background: #f8fafc;
-    padding: 6px 12px;
-    border-radius: 6px;
-    margin-top: 10px;
-    border: 1px solid #e2e8f0;
-}
-
-.slip-section-box {
-    position: relative;
-    z-index: 1;
-    margin-bottom: 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 10px 14px;
-    background: #ffffff;
-}
-
-.slip-book-highlight-box {
-    background: #f0f9ff;
-    border: 1.5px solid #0284c7;
-    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.08);
-}
-
-.slip-section-heading {
-    font-size: 0.74rem;
-    font-weight: 800;
-    letter-spacing: 0.8px;
-    color: #475569;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.slip-book-highlight-box .slip-section-heading {
-    color: #0369a1;
-}
-
-.slip-grid-2 {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px 16px;
-    font-size: 0.85rem;
-}
-
-.slip-full-width {
-    grid-column: span 2;
-}
-
-.slip-label {
-    color: #64748b;
-    font-weight: 500;
-    margin-right: 6px;
-    font-size: 0.8rem;
-}
-
-.slip-value {
-    color: #0f172a;
-    font-weight: 600;
-}
-
-.slip-book-title-value {
-    font-size: 1.05rem;
-    color: #0f172a;
-    font-weight: 700;
-}
-
-.slip-code-pill {
-    background: #e0f2fe;
-    color: #0369a1;
-    font-family: Consolas, monospace;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 4px;
-    border: 1px solid #bae6fd;
-}
-
-.slip-details-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 6px;
-    font-size: 0.8rem;
-}
-
-.slip-details-table th,
-.slip-details-table td {
-    border: 1px solid #cbd5e1;
-    padding: 6px 8px;
-    text-align: center;
-}
-
-.slip-details-table th {
-    background: #f1f5f9;
-    font-weight: 700;
-    color: #334155;
-    font-size: 0.75rem;
-}
-
-.slip-details-table td {
-    font-weight: 600;
-    color: #0f172a;
-}
-
-.slip-calculation-note {
-    font-size: 0.76rem;
-    color: #475569;
-    margin-top: 8px;
-    background: #fffbeb;
-    border: 1px solid #fef3c7;
-    padding: 5px 10px;
-    border-radius: 4px;
-}
-
-.slip-fine-summary-row {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    margin: 14px 0;
-    padding: 12px 16px;
-    background: #f8fafc;
-    border: 1.5px solid #0f172a;
-    border-radius: 8px;
-}
-
-.slip-barcode-area {
-    flex: 1;
-    min-width: 140px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.slip-status-stamp-area {
-    flex-shrink: 0;
-}
-
-/* Rubber Stamp Aesthetics */
-.slip-stamp {
-    display: inline-block;
-    padding: 4px 14px;
-    text-transform: uppercase;
-    font-weight: 900;
-    border-radius: 6px;
-    letter-spacing: 2px;
-    transform: rotate(-7deg);
-    border: 3px double;
-}
-
-.slip-stamp.paid {
-    color: #15803d;
-    border-color: #15803d;
-    background: rgba(22, 163, 74, 0.08);
-}
-
-.slip-stamp.due {
-    color: #dc2626;
-    border-color: #dc2626;
-    background: rgba(220, 38, 38, 0.08);
-}
-
-.slip-stamp-inner {
-    text-align: center;
-    line-height: 1.1;
-}
-
-.slip-stamp-text {
-    font-size: 1.25rem;
-    display: block;
-}
-
-.slip-stamp-sub {
-    font-size: 0.58rem;
-    letter-spacing: 1px;
-    display: block;
-}
-
-.slip-amount-box {
-    text-align: right;
-    flex-shrink: 0;
-}
-
-.slip-amount-label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #64748b;
-    letter-spacing: 0.8px;
-}
-
-.slip-amount-num {
-    font-size: 1.55rem;
-    font-weight: 800;
-    color: #dc2626;
-    line-height: 1.1;
-    margin: 2px 0;
-}
-
-.slip-amount-box.is-paid .slip-amount-num {
-    color: #15803d;
-}
-
-.slip-amount-words {
-    font-size: 0.74rem;
-    font-style: italic;
-    color: #475569;
-}
-
-.slip-payment-mode {
-    font-size: 0.72rem;
-    color: #64748b;
-    margin-top: 2px;
-}
-
-.slip-divider-dashed {
-    border-top: 1px dashed #cbd5e1;
-    margin: 12px 0;
-}
-
-.slip-signatures-row {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-top: 22px;
-    padding-top: 8px;
-}
-
-.slip-sig-block {
-    text-align: center;
-    width: 175px;
-}
-
-.slip-sig-line {
-    border-bottom: 1.5px dotted #64748b;
-    margin-bottom: 5px;
-    height: 32px;
-}
-
-.slip-sig-text {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #475569;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.slip-official-seal-circle {
-    width: 64px;
-    height: 64px;
-    border: 2px dashed #94a3b8;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.6rem;
-    font-weight: 800;
-    color: #94a3b8;
-    text-align: center;
-    letter-spacing: 0.5px;
-    padding: 4px;
-}
-
-.slip-breakdown-box {
-    margin-top: 10px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    overflow: hidden;
-    background: #ffffff;
-}
-
-.slip-breakdown-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.8rem;
-}
-
-.slip-breakdown-table th,
-.slip-breakdown-table td {
-    padding: 6px 10px;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.slip-breakdown-table th {
-    background: #f1f5f9;
-    color: #334155;
-    font-weight: 700;
-    font-size: 0.74rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.slip-breakdown-total-row {
-    background: #fffbeb;
-    border-top: 1.5px solid #cbd5e1;
-}
-
-.slip-breakdown-total-row td {
-    font-weight: 800;
-    color: #0f172a;
-}
-
-/* Conditions box */
-.slip-conditions-box {
-    position: relative;
-    z-index: 1;
-    margin: 14px 0 10px 0;
-    background: #f8fafc;
-    border: 1px dashed #94a3b8;
-    border-radius: 8px;
-    padding: 10px 14px;
-}
-
-.slip-conditions-header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.72rem;
-    font-weight: 800;
-    color: #1e293b;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 5px;
-}
-
-.slip-conditions-list {
-    margin: 0;
-    padding-left: 18px;
-    font-size: 0.68rem;
-    color: #475569;
-    line-height: 1.45;
-}
-
-.slip-conditions-list li {
-    margin-bottom: 2px;
-}
-
-.slip-conditions-list li strong {
-    color: #0f172a;
-}
-
-.slip-footer-disclaimer {
-    position: relative;
-    z-index: 1;
-    text-align: center;
-    margin-top: 10px;
-    padding-top: 8px;
-    border-top: 1px solid #f1f5f9;
-    font-size: 0.7rem;
-    color: #64748b;
-}
-
-/* ==========================================================================
-   ATM CARD FINE SLIP SYSTEM (CR80 / ISO 7810 ID-1 Standard: 85.6mm x 53.98mm)
-   ========================================================================== */
-
-.atm-slip-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-}
-
-.atm-cut-guide {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-size: 0.72rem;
-    color: #475569;
-    font-weight: 600;
-    padding: 6px 14px;
-    background: #ffffff;
-    border: 1px dashed #cbd5e1;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
-
-.atm-card-pair {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 18px;
-    margin: 0 auto;
-}
-
-/* Base ATM Card dimensions: 85.6mm x 53.98mm (standard credit/ATM card) */
-.atm-card {
-    width: 85.6mm;
-    min-width: 85.6mm;
-    max-width: 85.6mm;
-    height: 53.98mm;
-    min-height: 53.98mm;
-    max-height: 53.98mm;
-    box-sizing: border-box;
-    border-radius: 3.5mm;
-    border: 1.5px solid #0f172a;
-    background: #ffffff;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
-    position: relative;
-    overflow: hidden;
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: #0f172a;
-    padding: 2.2mm 3.2mm;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-}
-
-/* ATM Card Header */
-.atm-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 2mm;
-    border-bottom: 0.8px solid #cbd5e1;
-    padding-bottom: 1.2mm;
-    margin-bottom: 1mm;
-}
-
-.atm-header-left {
-    display: flex;
-    align-items: center;
-    gap: 1.8mm;
-    flex: 1;
-    min-width: 0;
-}
-
-.atm-card-logo {
-    width: 7.2mm;
-    height: 7.2mm;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 1px solid #0f172a;
-    flex-shrink: 0;
-}
-
-.atm-header-titles {
-    flex: 1;
-    min-width: 0;
-    line-height: 1.05;
-}
-
-.atm-college-name {
-    font-size: 6.8pt;
-    font-weight: 800;
-    color: #0f172a;
-    text-transform: uppercase;
-    letter-spacing: -0.2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin: 0;
-}
-
-.atm-slip-subtitle {
-    font-size: 4.8pt;
-    font-weight: 700;
-    color: #64748b;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
-    margin-top: 0.2mm;
-}
-
-.atm-header-right {
-    display: flex;
-    align-items: center;
-    gap: 1.5mm;
-    flex-shrink: 0;
-}
-
-/* Golden Smart Chip */
-.atm-chip {
-    width: 6.5mm;
-    height: 4.8mm;
-    background: linear-gradient(135deg, #fef08a 0%, #ca8a04 100%);
-    border: 0.6px solid #a16207;
-    border-radius: 1mm;
-    position: relative;
-    box-shadow: inset 0 0 1px rgba(0,0,0,0.3);
-}
-
-.atm-chip::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 0.4px;
-    background: rgba(0,0,0,0.35);
-}
-
-.atm-card-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    gap: 0.8mm;
-    line-height: 1.15;
-}
-
-.atm-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 5.6pt;
-    gap: 2mm;
-}
-
-.atm-row-item {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.atm-label {
-    color: #64748b;
-    font-weight: 600;
-    font-size: 5.2pt;
-    text-transform: uppercase;
-    margin-right: 0.8mm;
-}
-
-.atm-val {
-    font-weight: 700;
-    color: #0f172a;
-}
-
-.atm-val-code {
-    background: #f1f5f9;
-    color: #0369a1;
-    font-family: monospace;
-    font-weight: 800;
-    padding: 0.2mm 0.8mm;
-    border-radius: 0.6mm;
-    border: 0.4px solid #cbd5e1;
-}
-
-/* Overdue and Damage highlight strip on ATM Card */
-.atm-breakdown-strip {
-    background: #f8fafc;
-    border: 0.6px solid #cbd5e1;
-    border-radius: 1.2mm;
-    padding: 0.8mm 1.5mm;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1mm;
-    font-size: 5.2pt;
-    line-height: 1.1;
-}
-
-.atm-breakdown-col {
-    display: flex;
-    flex-direction: column;
-}
-
-.atm-b-title {
-    font-weight: 800;
-    color: #334155;
-    font-size: 4.9pt;
-    text-transform: uppercase;
-    display: flex;
-    justify-content: space-between;
-}
-
-.atm-b-detail {
-    font-size: 4.7pt;
-    color: #64748b;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.atm-b-fee {
-    font-weight: 800;
-    color: #b91c1c;
-}
-
-/* ATM Card Footer */
-.atm-card-footer {
-    border-top: 0.8px solid #cbd5e1;
-    padding-top: 1mm;
-    margin-top: 0.8mm;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1.5mm;
-}
-
-.atm-footer-barcode {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    max-width: 32mm;
-}
-
-.atm-footer-barcode svg {
-    height: 4.8mm !important;
-    max-width: 30mm !important;
-}
-
-.atm-barcode-code {
-    font-size: 4.2pt;
-    font-family: monospace;
-    font-weight: 700;
-    color: #64748b;
-    line-height: 1;
-    margin-top: 0.2mm;
-}
-
-.atm-stamp-badge {
-    font-size: 5.2pt;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 0.6mm 1.8mm;
-    border-radius: 1mm;
-    border: 1px solid;
-    line-height: 1;
-}
-
-.atm-stamp-badge.paid {
-    color: #15803d;
-    border-color: #15803d;
-    background: #dcfce7;
-}
-
-.atm-stamp-badge.due {
-    color: #dc2626;
-    border-color: #dc2626;
-    background: #fee2e2;
-}
-
-.atm-amount-group {
-    text-align: right;
-    line-height: 1;
-}
-
-.atm-amount-lbl {
-    font-size: 4.4pt;
-    font-weight: 800;
-    color: #64748b;
-    text-transform: uppercase;
-}
-
-.atm-amount-num {
-    font-size: 9.5pt;
-    font-weight: 900;
-    color: #b91c1c;
-    line-height: 1.05;
-}
-
-.atm-amount-num.is-paid {
-    color: #15803d;
-}
-
-.atm-amount-words {
-    font-size: 4.2pt;
-    font-style: italic;
-    color: #475569;
-    max-width: 25mm;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* ==========================================================================
-   ATM CARD BACK SIDE
-   ========================================================================== */
-.atm-card-back {
-    padding: 0 !important;
-}
-
-.atm-mag-stripe {
-    width: 100%;
-    height: 6.8mm;
-    background: #0f172a;
-    margin-top: 2.2mm;
-}
-
-.atm-back-content {
-    padding: 1.6mm 3.2mm 2.2mm 3.2mm;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    line-height: 1.15;
-}
-
-.atm-back-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 0.6px solid #cbd5e1;
-    padding-bottom: 0.8mm;
-    margin-bottom: 0.8mm;
-}
-
-.atm-back-title {
-    font-size: 5.4pt;
-    font-weight: 800;
-    color: #0f172a;
-    text-transform: uppercase;
-    letter-spacing: 0.2px;
-}
-
-.atm-back-ref {
-    font-size: 4.6pt;
-    color: #64748b;
-    font-weight: 600;
-}
-
-.atm-conditions-list {
-    margin: 0;
-    padding-left: 3.5mm;
-    font-size: 4.6pt;
-    color: #334155;
-    line-height: 1.25;
-}
-
-.atm-conditions-list li {
-    margin-bottom: 0.35mm;
-}
-
-.atm-conditions-list strong {
-    color: #0f172a;
-}
-
-.atm-back-bottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-top: 0.8mm;
-    padding-top: 0.8mm;
-    border-top: 0.6px solid #e2e8f0;
-}
-
-.atm-sig-box {
-    text-align: center;
-    width: 22mm;
-}
-
-.atm-sig-line {
-    border-bottom: 0.6px dotted #64748b;
-    height: 3.5mm;
-    margin-bottom: 0.4mm;
-}
-
-.atm-sig-txt {
-    font-size: 4.2pt;
-    font-weight: 700;
-    color: #475569;
-    text-transform: uppercase;
-}
-
-.atm-seal-mini {
-    width: 6.5mm;
-    height: 6.5mm;
-    border: 0.6px dashed #94a3b8;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3.5pt;
-    font-weight: 800;
-    color: #94a3b8;
-    text-align: center;
-    line-height: 0.95;
-}
-
-/* ==========================================================================
-   POCKET SLIP FORMAT (ATM Card Width: 85.6mm, Continuous Height)
-   ========================================================================== */
-.atm-pocket-card {
-    width: 85.6mm;
-    min-width: 85.6mm;
-    max-width: 85.6mm;
-    box-sizing: border-box;
-    border-radius: 3.5mm;
-    border: 1.5px solid #0f172a;
-    background: #ffffff;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
-    padding: 3.2mm 3.8mm;
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: #0f172a;
-    margin: 0 auto;
-    font-size: 6pt;
-}
-
-.atm-pocket-card .slip-header-logo-row {
-    gap: 8px;
-}
-
-.atm-pocket-card .slip-logo {
-    width: 36px;
-    height: 36px;
-}
-
-.atm-pocket-card .slip-library-title {
-    font-size: 0.85rem;
-}
-
-.atm-pocket-card .slip-library-subtitle {
-    font-size: 0.55rem;
-}
-
-.atm-pocket-card .slip-doc-badge {
-    font-size: 0.52rem;
-    padding: 1px 6px;
-}
-
-.atm-pocket-card .slip-section-box {
-    padding: 6px 8px;
-    margin-bottom: 8px;
-}
-
-.atm-pocket-card .slip-section-heading {
-    font-size: 0.6rem;
-    margin-bottom: 4px;
-}
-
-.atm-pocket-card .slip-grid-2 {
-    font-size: 0.65rem;
-    gap: 4px 8px;
-}
-
-.atm-pocket-card .slip-breakdown-table th,
-.atm-pocket-card .slip-breakdown-table td {
-    padding: 4px 6px;
-    font-size: 0.62rem;
-}
-
-.atm-pocket-card .slip-conditions-box {
-    padding: 6px 8px;
-    margin: 8px 0;
-}
-
-.atm-pocket-card .slip-conditions-list {
-    font-size: 0.56rem;
-}
-
-.atm-pocket-card .slip-stamp-text {
-    font-size: 0.85rem;
-}
-
-.atm-pocket-card .slip-amount-num {
-    font-size: 1.15rem;
-}
-
-.atm-pocket-card .slip-fine-summary-row {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 8px 10px;
-    box-sizing: border-box;
-}
-
-.atm-pocket-card .slip-barcode-area {
-    min-width: 0;
-    flex: 1;
-}
-
-.atm-pocket-card .slip-amount-box {
-    text-align: right;
-    flex-shrink: 0;
-}
-
-/* Print Overrides */
 @media print {
     body * {
-        visibility: hidden !important;
+        visibility: hidden;
     }
-    #printableBarcodeArea, #printableBarcodeArea *,
-    #printableFineSlipArea, #printableFineSlipArea * {
-        visibility: visible !important;
+    #printableBarcodeArea, #printableBarcodeArea * {
+        visibility: visible;
     }
     #printableBarcodeArea {
         position: absolute;
@@ -1458,16 +467,6 @@ body {
         gap: 12px !important;
         padding: 15px !important;
         background: white !important;
-    }
-    #printableFineSlipArea {
-        position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 10px !important;
-        background: #ffffff !important;
-        display: block !important;
     }
     .barcode-label-pill {
         background: #e2e8f0 !important;
@@ -1486,48 +485,114 @@ body {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
-    .fine-slip-card {
-        box-shadow: none !important;
-        border: 2px solid #000000 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        margin: 0 auto !important;
-        padding: 24px 28px !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        page-break-inside: avoid !important;
-    }
-    .atm-card-pair {
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: center !important;
-        align-items: center !important;
-        gap: 6mm !important;
-        margin: 0 auto !important;
-        page-break-inside: avoid !important;
-    }
-    .atm-card {
-        box-shadow: none !important;
-        border: 1.5px solid #000000 !important;
-        page-break-inside: avoid !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-    .atm-pocket-card {
-        box-shadow: none !important;
-        border: 1.5px solid #000000 !important;
-        page-break-inside: avoid !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-    .atm-cut-guide {
-        display: none !important;
-    }
-    .slip-doc-badge, .slip-code-pill, .slip-details-table th, .slip-meta-strip, .slip-stamp, .slip-book-highlight-box, .slip-breakdown-box, .slip-breakdown-table th, .slip-breakdown-total-row, .slip-conditions-box, .atm-chip, .atm-mag-stripe, .atm-stamp-badge, .atm-val-code, .atm-breakdown-strip {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-    .no-print, .modal-backdrop, .modal-header, .modal-footer, .btn, .btn-close {
-        display: none !important;
-    }
-}
+}
+
+/* Authentication & Security Styles */
+.auth-user-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.auth-badge-admin {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+.auth-badge-principal {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+.auth-badge-librarian {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+/* Auth Modal Window */
+.auth-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+.auth-modal-backdrop.active {
+    opacity: 1;
+    visibility: visible;
+}
+.auth-modal-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 440px;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    transform: translateY(20px) scale(0.95);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.auth-modal-backdrop.active .auth-modal-card {
+    transform: translateY(0) scale(1);
+}
+
+.auth-role-tabs {
+    display: flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    gap: 4px;
+}
+.auth-role-tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 10px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    transition: all 0.2s ease;
+}
+.auth-role-tab.active {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.auth-role-tab.active.tab-admin { color: #dc2626; }
+.auth-role-tab.active.tab-principal { color: #0284c7; }
+.auth-role-tab.active.tab-librarian { color: #16a34a; }
+
+/* Page Auth Gate Blocking Overlay */
+.auth-gate-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #f8fafc;
+    z-index: 99990;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+

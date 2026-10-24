@@ -5,8 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Kuthbukhana Anwariyya</title>
-    <link rel="icon" type="image/png" href="../../../images/image.png">
-    <link rel="apple-touch-icon" href="../../../images/image.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -20,16 +18,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
-    <script src="../../../auth.js"></script>
-    <script>
-        (function() {
-            const r = localStorage.getItem('library_auth_role');
-            const u = (localStorage.getItem('library_auth_username') || '').toLowerCase();
-            if (r !== 'admin' || u === 'librarian') {
-                window.location.replace('../../login.html?role=admin');
-            }
-        })();
-    </script>
     <script defer src="../../../script.js"></script>
     <script defer src="admin.js"></script>
 </head>
@@ -49,20 +37,18 @@
                     </small>
                 </div>
             </a>
-            <div class="d-flex gap-2 flex-wrap align-items-center">
-                <span id="cloudSyncStatusPill" onclick="openCloudSyncModal()" style="cursor: pointer;"></span>
-                <button class="btn btn-outline-light btn-sm" onclick="gohome()"><i class="bi bi-house-door me-1"></i> Home</button>
-                <button class="btn btn-outline-info btn-sm fw-semibold" onclick="openConnectModal()"><i class="bi bi-qr-code-scan me-1"></i> Phone QR</button>
-                <button class="btn btn-outline-primary btn-sm" onclick="openlibrary()"><i class="bi bi-book me-1"></i> Open Library</button>
-                <button class="btn btn-outline-success btn-sm" onclick="checkledger()"><i class="bi bi-journal-text me-1"></i> Ledger</button>
-                <button class="btn btn-outline-info btn-sm" onclick="goprincipal()"><i class="bi bi-person-badge me-1"></i> Principal View</button>
-                <button class="btn btn-outline-warning text-dark btn-sm fw-semibold" onclick="godataentry()"><i class="bi bi-phone me-1"></i> Fast Data Entry</button>
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-outline-light btn-sm" onclick="gohome()"><i class="bi bi-house-door me-1"></i>
+                    Home</button>
+                <button class="btn btn-outline-primary btn-sm" onclick="openlibrary()"><i class="bi bi-book me-1"></i>
+                    Open Library</button>
+                <button class="btn btn-outline-success btn-sm" onclick="checkledger()"><i
+                        class="bi bi-journal-text me-1"></i> Check Ledger</button>
+                <button class="btn btn-outline-info btn-sm" onclick="goprincipal()"><i
+                        class="bi bi-person-badge me-1"></i> Principal View</button>
+                <button class="btn btn-danger btn-sm active"><i class="bi bi-speedometer2 me-1"></i> Admin
+                    Dashboard</button>
                 <button class="btn btn-outline-danger btn-sm fw-bold btn-close-library-toggle shadow-sm" onclick="toggleCloseLibrary()"><i class="bi bi-lock-fill me-1"></i> Close Library</button>
-                <span class="badge bg-secondary text-white py-2 px-3 fw-semibold d-flex align-items-center gap-1 shadow-sm" title="Logged in Librarian">
-                    <i class="bi bi-person-badge-fill text-warning"></i>
-                    <span id="currentLibrarianBadge">Chief Librarian</span>
-                </span>
-                <button class="btn btn-outline-danger btn-sm fw-bold shadow-sm" onclick="handleUserLogout()"><i class="bi bi-box-arrow-right me-1"></i> Logout</button>
             </div>
         </div>
     </nav>
@@ -79,52 +65,31 @@
                 <p class="text-muted mb-0 small">Overview of library inventory stock, category management, and administration</p>
             </div>
             <div class="d-flex gap-2 flex-wrap action-btn-group">
-                <button class="btn btn-primary fw-semibold shadow-sm" onclick="openAddAdminModal()">
-                    <i class="bi bi-shield-plus me-1"></i> + Add Admin
-                </button>
-                <button class="btn btn-warning text-dark fw-bold shadow-sm" onclick="openAddLibrarianModal()">
-                    <i class="bi bi-person-plus-fill me-1"></i> + Add Librarian
-                </button>
-                <button class="btn btn-success fw-bold shadow-sm" onclick="openAddStaffModal()">
-                    <i class="bi bi-mortarboard-fill me-1"></i> + Add Teacher
-                </button>
-                <button class="btn btn-dark text-warning fw-bold shadow-sm" onclick="openChangePasswordsModal()">
-                    <i class="bi bi-key-fill me-1"></i> Change Passwords
-                </button>
-                <button class="btn btn-outline-dark fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#librarianModal">
-                    <i class="bi bi-people-fill me-1"></i> Manage Librarians
-                </button>
-                <button class="btn btn-outline-success fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#staffAccountModal">
-                    <i class="bi bi-person-lines-fill me-1"></i> Manage Teachers
-                </button>
-                <button class="btn btn-outline-primary text-dark fw-bold shadow-sm" onclick="godataentry()">
-                    <i class="bi bi-phone-fill me-1"></i> Fast Data Entry
-                </button>
-                <button class="btn btn-outline-info fw-semibold shadow-sm" onclick="openCloudSyncModal()">
-                    <i class="bi bi-cloud-arrow-up-fill me-1"></i> Cloud Sync
+                <button class="btn btn-outline-primary fw-semibold shadow-sm" onclick="openManageLibrariansModal()">
+                    <i class="bi bi-person-badge-fill me-1"></i> Manage Librarians
                 </button>
                 <button class="btn btn-outline-primary fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#studentModal">
-                    <i class="bi bi-people me-1"></i> Students
+                    <i class="bi bi-people me-1"></i> Add / Upload Students
                 </button>
                 <button class="btn btn-outline-info fw-semibold shadow-sm" data-bs-toggle="modal"
                     data-bs-target="#addCategoryModal">
-                    <i class="bi bi-tags me-1"></i> Categories
+                    <i class="bi bi-tags me-1"></i> Manage Categories
                 </button>
                 <button class="btn btn-outline-warning text-dark fw-semibold shadow-sm" data-bs-toggle="modal"
                     data-bs-target="#importModal">
-                    <i class="bi bi-upload me-1"></i> Import JSON
+                    <i class="bi bi-upload me-1"></i> Import Data (JSON)
                 </button>
                 <button class="btn btn-outline-success fw-semibold shadow-sm" onclick="openCustomExportModal()">
-                    <i class="bi bi-file-earmark-arrow-down me-1"></i> Export Data
+                    <i class="bi bi-file-earmark-arrow-down me-1"></i> Custom Data Export
                 </button>
                 <button class="btn btn-outline-info fw-semibold shadow-sm" onclick="openManageClassesModal()">
-                    <i class="bi bi-mortarboard-fill me-1"></i> Classes
+                    <i class="bi bi-mortarboard-fill me-1"></i> Manage Classes
                 </button>
                 <button class="btn btn-outline-dark fw-semibold shadow-sm" onclick="openBatchBarcodeModal()">
                     <i class="bi bi-upc-scan me-1"></i> Print Barcodes
                 </button>
                 <button class="btn btn-outline-danger fw-semibold shadow-sm" onclick="confirmResetDefaultData()">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Data
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Default Data
                 </button>
                 <button class="btn btn-primary fw-semibold shadow-sm" data-bs-toggle="modal"
                     data-bs-target="#addBookModal">
@@ -133,174 +98,60 @@
             </div>
         </div>
 
-        <!-- KPI Metric Stat Cards (6 responsive cards including Librarians & Teachers) -->
-        <div class="row g-3 mb-4">
-            <div class="col-xl-2 col-md-4 col-sm-6">
+        <!-- KPI Metric Stat Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-xl-3 col-md-6">
                 <div class="card kpi-card bg-primary shadow-sm h-100">
-                    <div class="card-body p-3 d-flex justify-content-between align-items-center">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-uppercase fw-semibold opacity-75 mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Total Titles</h6>
+                            <h6 class="text-uppercase fw-semibold opacity-75 mb-1" style="font-size: 0.78rem; letter-spacing: 0.5px;">Total Titles</h6>
                             <h2 id="adminTotalBooks" class="kpi-value mb-0">0</h2>
                         </div>
                         <i class="bi bi-journal-bookmark kpi-icon-bg"></i>
                     </div>
                 </div>
             </div>
-            <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="col-xl-3 col-md-6">
                 <div class="card kpi-card bg-success shadow-sm h-100">
-                    <div class="card-body p-3 d-flex justify-content-between align-items-center">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-uppercase fw-semibold opacity-75 mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">In Stock</h6>
+                            <h6 class="text-uppercase fw-semibold opacity-75 mb-1" style="font-size: 0.78rem; letter-spacing: 0.5px;">In Stock (Available)</h6>
                             <h2 id="adminInStock" class="kpi-value mb-0">0</h2>
                         </div>
                         <i class="bi bi-check-circle kpi-icon-bg"></i>
                     </div>
                 </div>
             </div>
-            <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="col-xl-3 col-md-6">
                 <div class="card kpi-card bg-danger shadow-sm h-100">
-                    <div class="card-body p-3 d-flex justify-content-between align-items-center">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-uppercase fw-semibold opacity-75 mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Out of Stock</h6>
+                            <h6 class="text-uppercase fw-semibold opacity-75 mb-1" style="font-size: 0.78rem; letter-spacing: 0.5px;">Out of Stock (Issued)</h6>
                             <h2 id="adminOutOfStock" class="kpi-value mb-0">0</h2>
                         </div>
                         <i class="bi bi-exclamation-octagon kpi-icon-bg"></i>
                     </div>
                 </div>
             </div>
-            <div class="col-xl-2 col-md-4 col-sm-6">
-                <div class="card kpi-card shadow-sm h-100 text-white" style="background: #475569 !important;">
-                    <div class="card-body p-3 d-flex justify-content-between align-items-center">
+            <div class="col-xl-3 col-md-6">
+                <div class="card kpi-card bg-warning shadow-sm h-100">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-uppercase fw-semibold opacity-75 mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Admin Hold</h6>
+                            <h6 class="text-uppercase fw-semibold opacity-75 mb-1" style="font-size: 0.78rem; letter-spacing: 0.5px;">Admin Hold (Reserved)</h6>
                             <h2 id="adminHoldCount" class="kpi-value mb-0">0</h2>
                         </div>
                         <i class="bi bi-shield-lock kpi-icon-bg"></i>
                     </div>
                 </div>
             </div>
-            <div class="col-xl-2 col-md-4 col-sm-6">
-                <div class="card kpi-card bg-warning text-dark shadow-sm h-100 border-0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;">
-                    <div class="card-body p-3 d-flex justify-content-between align-items-center">
+            <div class="col-xl-3 col-md-6">
+                <div class="card kpi-card bg-info shadow-sm h-100 text-white" onclick="openManageLibrariansModal()" style="cursor: pointer;" title="Manage Staff Librarians">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-uppercase fw-bold text-dark opacity-75 mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Librarians</h6>
-                            <div class="d-flex align-items-baseline gap-2">
-                                <h2 id="adminLibrarianCount" class="kpi-value mb-0 text-dark">0</h2>
-                                <button class="btn btn-sm btn-dark fw-bold py-0 px-2 rounded-pill shadow-sm" style="font-size: 0.72rem;" onclick="openAddLibrarianModal()">
-                                    <i class="bi bi-person-plus-fill me-1 text-warning"></i>+ Add
-                                </button>
-                            </div>
+                            <h6 class="text-uppercase fw-semibold opacity-75 mb-1" style="font-size: 0.78rem; letter-spacing: 0.5px;">Staff Librarians</h6>
+                            <h2 id="adminTotalLibrarians" class="kpi-value mb-0">1</h2>
                         </div>
-                        <i class="bi bi-people-fill kpi-icon-bg text-dark" style="opacity: 0.15;"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-2 col-md-4 col-sm-6">
-                <div class="card kpi-card text-dark shadow-sm h-100 border-0" style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%) !important;">
-                    <div class="card-body p-3 d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-uppercase fw-bold text-success opacity-75 mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Teachers</h6>
-                            <div class="d-flex align-items-baseline gap-2">
-                                <h2 id="adminStaffCount" class="kpi-value mb-0 text-dark">0</h2>
-                                <button class="btn btn-sm btn-success fw-bold py-0 px-2 rounded-pill shadow-sm" style="font-size: 0.72rem;" onclick="openAddStaffModal()">
-                                    <i class="bi bi-person-plus-fill me-1"></i>+ Add
-                                </button>
-                            </div>
-                        </div>
-                        <i class="bi bi-person-workspace kpi-icon-bg text-success" style="opacity: 0.18;"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- System Capacity & High-Traffic Performance Monitor Bar -->
-        <div class="card shadow-sm border-0 rounded-4 mb-4 p-3" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #f8fafc; border: 1px solid rgba(255,255,255,0.1) !important;">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-primary bg-opacity-25 text-info d-flex align-items-center justify-content-center border border-info border-opacity-50" style="width: 44px; height: 44px; font-size: 1.3rem;">
-                        <i class="bi bi-cpu-fill"></i>
-                    </div>
-                    <div>
-                        <div class="d-flex align-items-center gap-2">
-                            <h6 class="fw-bold mb-0 text-white">System Capacity & Traffic Engine</h6>
-                            <span class="badge bg-success text-white fw-bold px-2 py-1" style="font-size: 0.72rem;">
-                                <i class="bi bi-lightning-charge-fill me-1"></i>High-Throughput Active
-                            </span>
-                        </div>
-                        <small class="text-white-50" style="font-size: 0.78rem;">In-Memory RAM Cache (Zero-Disk Read Latency) • HTTP Gzip Compression • ETag 304 Caching • Socket Keep-Alive</small>
-                    </div>
-                </div>
-                <div class="d-flex align-items-center gap-3 flex-wrap">
-                    <div class="text-center px-2">
-                        <small class="text-white-50 d-block" style="font-size: 0.7rem;">PING / LATENCY</small>
-                        <span class="fw-bold text-success font-monospace" id="systemPingValue" style="font-size: 0.95rem;">&lt; 1 ms</span>
-                    </div>
-                    <div class="text-center px-2 border-start border-secondary border-opacity-50">
-                        <small class="text-white-50 d-block" style="font-size: 0.7rem;">SERVER RAM</small>
-                        <span class="fw-bold text-info font-monospace" id="systemRamValue" style="font-size: 0.95rem;">Loading...</span>
-                    </div>
-                    <div class="text-center px-2 border-start border-secondary border-opacity-50">
-                        <small class="text-white-50 d-block" style="font-size: 0.7rem;">DEVICES CONNECTED</small>
-                        <span class="fw-bold text-warning font-monospace" id="systemSseClients" style="font-size: 0.95rem;">0</span>
-                    </div>
-                    <button class="btn btn-outline-light btn-sm fw-semibold shadow-sm ms-2" type="button" onclick="refreshSystemLoad()" title="Test server response speed">
-                        <i class="bi bi-arrow-repeat me-1"></i> Test Ping
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quick Action Cards Section: Librarians & Teachers -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-6">
-                <div class="card shadow-sm border-0 rounded-4 h-100 p-3" style="background: #ffffff; border: 1px solid #fed7aa !important;">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center shadow-sm" style="width: 46px; height: 46px; font-size: 1.3rem; flex-shrink: 0;">
-                                <i class="bi bi-person-badge-fill"></i>
-                            </div>
-                            <div>
-                                <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                                    Librarian Staff Accounts
-                                    <span class="badge bg-warning text-dark fw-bold rounded-pill" id="dashboardLibrarianBadge">Loading...</span>
-                                </h6>
-                                <small class="text-muted">Create logins for library desk staff. Issue & return logs track active librarian.</small>
-                            </div>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-warning text-dark fw-bold shadow-sm" onclick="openAddLibrarianModal()">
-                                <i class="bi bi-person-plus-fill me-1"></i> + Add Librarian
-                            </button>
-                            <button class="btn btn-sm btn-outline-dark fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#librarianModal">
-                                Manage
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card shadow-sm border-0 rounded-4 h-100 p-3" style="background: #ffffff; border: 1px solid #bbf7d0 !important;">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center shadow-sm" style="width: 46px; height: 46px; font-size: 1.3rem; flex-shrink: 0;">
-                                <i class="bi bi-person-workspace"></i>
-                            </div>
-                            <div>
-                                <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                                    College Teachers / Staff Accounts
-                                    <span class="badge bg-success text-white fw-bold rounded-pill" id="dashboardStaffBadge">Loading...</span>
-                                </h6>
-                                <small class="text-muted">Teachers can log in to view their taken books, borrowing history & research loans.</small>
-                            </div>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="openAddStaffModal()">
-                                <i class="bi bi-person-plus-fill me-1"></i> + Add Teacher
-                            </button>
-                            <button class="btn btn-sm btn-outline-success fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#staffAccountModal">
-                                Manage
-                            </button>
-                        </div>
+                        <i class="bi bi-person-badge kpi-icon-bg"></i>
                     </div>
                 </div>
             </div>
@@ -1095,221 +946,55 @@
         </div>
     </div>
 
-    <!-- Toast Notifications Container -->
-    <div id="adminToastContainer"></div>
-
-    <!-- Connect Devices / Phone Access Modal -->
-    <div class="modal fade" id="connectModal" tabindex="-1" aria-labelledby="connectModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4">
-                <div class="modal-header bg-dark text-white rounded-top-4">
-                    <h5 class="modal-title fw-bold" id="connectModalLabel">
-                        <i class="bi bi-phone-fill text-primary me-2"></i>Connect Other Devices (Phones & PCs)
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4 text-center">
-                    <p class="text-muted small mb-3">Scan this QR Code with your smartphone camera to immediately open the Library System on your mobile:</p>
-                    
-                    <div class="p-3 bg-light rounded-4 d-inline-block border shadow-sm mb-3">
-                        <img id="indexQrCodeImg" src="" alt="QR Code" style="width: 200px; height: 200px; object-fit: contain;">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Wi-Fi Network Address</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control text-center fw-bold" id="indexNetworkUrlInput" readonly value="Loading...">
-                            <button class="btn btn-outline-primary" type="button" onclick="copyIndexNetworkUrl()">
-                                <i class="bi bi-clipboard me-1"></i> Copy
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-info py-2 small text-start mb-0">
-                        <i class="bi bi-people-fill me-1"></i>
-                        <strong>Multi-Device Data Entry:</strong> Multiple operators can open <code>/assets/subpages/data-entry.html</code> on their phones to enter books simultaneously!
-                    </div>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary w-100 rounded-3" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Set Passwords & Accounts Modal -->
-    <div class="modal fade" id="changePasswordsModal" tabindex="-1" aria-labelledby="changePasswordsModalLabel" aria-hidden="true">
+    <!-- Manage Librarians Modal -->
+    <div class="modal fade" id="manageLibrariansModal" tabindex="-1" aria-labelledby="manageLibrariansModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 shadow-lg rounded-4">
-                <div class="modal-header bg-dark text-white rounded-top-4">
-                    <h5 class="modal-title fw-bold" id="changePasswordsModalLabel">
-                        <i class="bi bi-key-fill text-warning me-2"></i>Change Role Passwords & Security
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="changePasswordsForm" onsubmit="handleAdminUpdatePasswords(event)">
-                    <div class="modal-body p-4">
-                        <p class="text-muted small mb-4">View and change passwords for all library portals: Administrator, Principal, Desk Librarian, and College Teachers.</p>
-
-                        <div class="row g-3">
-                            <!-- 1. Administrator Password -->
-                            <div class="col-md-6">
-                                <div class="p-3 rounded-3 border bg-light h-100">
-                                    <label class="form-label small fw-bold text-dark text-uppercase d-flex justify-content-between">
-                                        <span><i class="bi bi-shield-lock-fill text-primary me-1"></i> 👑 Administrator Password</span>
-                                        <span class="badge bg-primary text-white" id="badgeAdminStatus">Active</span>
-                                    </label>
-                                    <input type="text" class="form-control" id="newAdminPwdInput" placeholder="New Admin Password (leave blank to keep current)">
-                                    <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Controls access to this Admin Dashboard & Configuration</small>
-                                </div>
-                            </div>
-
-                            <!-- 2. Principal Passcode -->
-                            <div class="col-md-6">
-                                <div class="p-3 rounded-3 border bg-light h-100">
-                                    <label class="form-label small fw-bold text-dark text-uppercase d-flex justify-content-between">
-                                        <span><i class="bi bi-mortarboard-fill text-info me-1"></i> 👑 Principal Passcode</span>
-                                        <span class="badge bg-info text-dark" id="badgePrincipalStatus">Loading...</span>
-                                    </label>
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" id="newPrincipalPwdInput" placeholder="Principal Passcode">
-                                        <button type="button" class="btn btn-outline-danger" onclick="handleDeletePrincipalPassword()" title="Delete / Clear Principal Passcode">
-                                            <i class="bi bi-trash-fill"></i>
-                                        </button>
-                                    </div>
-                                    <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Passcode used by the Principal on phone or PC</small>
-                                </div>
-                            </div>
-
-                            <!-- 3. Desk Librarian Password -->
-                            <div class="col-md-6">
-                                <div class="p-3 rounded-3 border bg-light h-100">
-                                    <label class="form-label small fw-bold text-dark text-uppercase d-flex justify-content-between">
-                                        <span><i class="bi bi-journal-bookmark-fill text-warning me-1"></i> 📖 Librarian Password</span>
-                                        <span class="badge bg-warning text-dark" id="badgeLibrarianStatus">Loading...</span>
-                                    </label>
-                                    <input type="text" class="form-control" id="newLibrarianPwdInput" placeholder="New Librarian Desk Password">
-                                    <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Password used by desk circulation librarians for book issue/return</small>
-                                </div>
-                            </div>
-
-                            <!-- 4. College Teachers Password -->
-                            <div class="col-md-6">
-                                <div class="p-3 rounded-3 border bg-light h-100">
-                                    <label class="form-label small fw-bold text-dark text-uppercase d-flex justify-content-between">
-                                        <span><i class="bi bi-person-workspace text-success me-1"></i> 👨‍🏫 Teacher Portal Password</span>
-                                        <span class="badge bg-success text-white" id="badgeTeacherStatus">Loading...</span>
-                                    </label>
-                                    <input type="text" class="form-control" id="newTeacherPwdInput" placeholder="Update Teacher Password">
-                                    <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Password used by college faculty to view borrowed books</small>
-                                </div>
-                            </div>
-
-                            <!-- 5. Fast Data Entry Staff Passcode -->
-                            <div class="col-12">
-                                <div class="p-3 rounded-3 border bg-light">
-                                    <label class="form-label small fw-bold text-dark text-uppercase d-flex justify-content-between">
-                                        <span><i class="bi bi-phone-fill text-secondary me-1"></i> 📱 Mobile Fast Data Entry Passcode</span>
-                                        <span class="badge bg-secondary text-white" id="badgeStaffFastStatus">Loading...</span>
-                                    </label>
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" id="newStaffPwdInput" placeholder="Fast Entry Passcode (default: staff123)">
-                                        <button type="button" class="btn btn-outline-danger" onclick="handleDeleteStaffPassword()" title="Clear Fast Entry Passcode">
-                                            <i class="bi bi-trash-fill me-1"></i> Clear
-                                        </button>
-                                    </div>
-                                    <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Passcode used on phone barcode scanner at /assets/subpages/data-entry.html</small>
-                                </div>
-                            </div>
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header bg-primary text-white p-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-white bg-opacity-20 rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <i class="bi bi-person-badge-fill fs-3 text-white"></i>
                         </div>
-
-                        <!-- Danger Zone: Delete All Current Accounts -->
-                        <div class="card border border-danger border-opacity-50 rounded-3 mt-4 bg-danger bg-opacity-10 p-3">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                <div>
-                                    <strong class="text-danger d-flex align-items-center gap-1">
-                                        <i class="bi bi-exclamation-triangle-fill"></i> Delete All Current Accounts
-                                    </strong>
-                                    <small class="text-muted d-block" style="font-size: 0.78rem;">
-                                        Deletes current librarian, principal passcode, teachers, and admin accounts.
-                                    </small>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-danger fw-bold shadow-sm" onclick="handleDeleteAllAccounts()">
-                                    <i class="bi bi-trash3-fill me-1"></i> Delete All Accounts
-                                </button>
-                            </div>
+                        <div>
+                            <h5 class="modal-title fw-bold mb-0" id="manageLibrariansModalLabel">Manage Staff Librarians</h5>
+                            <small class="text-white-50">Create, view, and manage librarian accounts with access to Open Library & Ledger</small>
                         </div>
                     </div>
-                    <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary fw-bold px-4 rounded-3" id="btnSubmitChangePasswords">
-                            <i class="bi bi-check2-circle me-1"></i> Save Passwords
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Manage Admins & Librarians Modal -->
-    <div class="modal fade" id="librarianModal" tabindex="-1" aria-labelledby="librarianModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 shadow-lg rounded-4">
-                <div class="modal-header bg-dark text-white rounded-top-4">
-                    <h5 class="modal-title fw-bold" id="librarianModalLabel">
-                        <i class="bi bi-shield-lock-fill text-warning me-2"></i>Administrator & Librarian Accounts Management
-                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <!-- Create / Manage Card -->
-                    <div class="card border border-primary border-opacity-50 shadow-sm rounded-4 mb-4" id="libFormCard" style="background: rgba(238, 242, 255, 0.45);">
-                        <div class="card-header bg-transparent border-0 pt-3 pb-0">
-                            <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2" id="libFormCardHeader">
-                                <i class="bi bi-person-plus-fill text-primary fs-5" id="libFormIcon"></i>
-                                <span id="libFormTitleText">Add or Update Account</span>
+                    <!-- Add Librarian Card -->
+                    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-light">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-person-plus-fill text-primary"></i> Add New Librarian Account
                             </h6>
-                            <small class="text-muted">Create unique login credentials for Administrators and Desk Librarians</small>
-                        </div>
-                        <div class="card-body">
-                            <!-- Role Toggle Pills -->
-                            <div class="btn-group w-100 mb-3 shadow-sm" role="group">
-                                <button type="button" class="btn btn-outline-primary fw-bold py-2 active" id="btnRolePillAdmin" onclick="selectRolePill('admin')">
-                                    <i class="bi bi-shield-check me-1"></i> Chief Administrator
-                                </button>
-                                <button type="button" class="btn btn-outline-warning text-dark fw-bold py-2" id="btnRolePillLibrarian" onclick="selectRolePill('librarian')">
-                                    <i class="bi bi-journal-bookmark me-1"></i> Desk Librarian
-                                </button>
-                            </div>
-
-                            <form id="createLibrarianForm" onsubmit="handleCreateLibrarian(event)">
-                                <input type="hidden" id="newLibRole" value="admin">
+                            <form id="addLibrarianForm" onsubmit="submitAddLibrarian(event)">
                                 <div class="row g-3">
                                     <div class="col-md-6">
-                                        <label class="form-label small fw-bold text-muted text-uppercase">Full Name / Display Name *</label>
+                                        <label class="form-label small fw-bold text-muted mb-1">Full Name *</label>
+                                        <input type="text" id="newLibName" class="form-control" placeholder="e.g. Ahmad K" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-muted mb-1">Username (Login ID) *</label>
+                                        <input type="text" id="newLibUsername" class="form-control" placeholder="e.g. ahmad" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-muted mb-1">Password *</label>
                                         <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                            <input type="text" class="form-control" id="newLibName" placeholder="e.g. Chief Admin / Desk Staff" required>
+                                            <input type="password" id="newLibPassword" class="form-control" placeholder="Create password" required>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="_togglePasswordVisibility('newLibPassword', this)">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label small fw-bold text-muted text-uppercase">Username (Login ID) *</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-at"></i></span>
-                                            <input type="text" class="form-control" id="newLibUsername" placeholder="e.g. admin or librarian" required autocomplete="username">
-                                        </div>
-                                        <small class="text-muted" style="font-size: 0.72rem;">Unique login username without spaces</small>
-                                    </div>
-                                    <div class="col-md-12">
-                                        <label class="form-label small fw-bold text-muted text-uppercase">Password *</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-key"></i></span>
-                                            <input type="password" class="form-control" id="newLibPassword" placeholder="Min 3 characters" required autocomplete="new-password">
-                                        </div>
+                                        <label class="form-label small fw-bold text-muted mb-1">Phone Number (Optional)</label>
+                                        <input type="text" id="newLibPhone" class="form-control" placeholder="e.g. 9876543210">
                                     </div>
                                     <div class="col-12 text-end">
-                                        <button type="submit" class="btn btn-primary fw-bold px-4 shadow-sm" id="btnSubmitNewLib">
-                                            <i class="bi bi-check2-circle me-1"></i> <span id="btnSubmitNewLibText">Create / Update Administrator</span>
+                                        <button type="submit" id="btnSaveLibrarian" class="btn btn-primary fw-bold px-4 rounded-pill shadow-sm">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Create Librarian Account
                                         </button>
                                     </div>
                                 </div>
@@ -1318,147 +1003,45 @@
                     </div>
 
                     <!-- Existing Librarians Table -->
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                            <i class="bi bi-shield-lock-fill text-primary"></i> Active Librarians (<span id="librarianCountBadge">0</span>)
-                        </h6>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-outline-danger btn-sm" type="button" onclick="handleDeleteAllLibrarians()"><i class="bi bi-trash3-fill me-1"></i> Delete All</button>
-                            <button class="btn btn-outline-secondary btn-sm" type="button" onclick="loadLibrarians()"><i class="bi bi-arrow-repeat me-1"></i> Refresh</button>
-                        </div>
-                    </div>
-
-                    <div class="table-responsive rounded-3 border">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light text-uppercase small text-muted">
-                                <tr>
-                                    <th>Librarian</th>
-                                    <th>Username</th>
-                                    <th>Role</th>
-                                    <th>Created</th>
-                                    <th class="text-end">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="librariansTableBody">
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">Loading librarians...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Manage Teachers / Staff Accounts Modal -->
-    <div class="modal fade" id="staffAccountModal" tabindex="-1" aria-labelledby="staffAccountModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 shadow-lg rounded-4">
-                <div class="modal-header bg-dark text-white rounded-top-4">
-                    <h5 class="modal-title fw-bold" id="staffAccountModalLabel">
-                        <i class="bi bi-person-workspace text-success me-2"></i>College Teachers & Staff Accounts Management
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <!-- Create New Teacher Account Card -->
-                    <div class="card border border-success border-opacity-50 shadow-sm rounded-4 mb-4" style="background: rgba(220, 252, 231, 0.25);">
-                        <div class="card-header bg-transparent border-0 pt-3 pb-0">
+                    <div class="card border rounded-4 shadow-sm overflow-hidden">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                             <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                                <i class="bi bi-person-plus-fill text-success fs-5"></i> Create New Teacher / Staff Account
+                                <i class="bi bi-people-fill text-info"></i> Active Librarians
                             </h6>
-                            <small class="text-muted">Create separate login credentials for college teachers so they can view their taken books</small>
+                            <span id="librariansCountBadge" class="badge bg-primary rounded-pill">0 Librarians</span>
                         </div>
-                        <div class="card-body">
-                            <form id="createStaffForm" onsubmit="handleCreateStaff(event)">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold text-muted text-uppercase">Teacher Full Name *</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                            <input type="text" class="form-control" id="newStaffName" placeholder="e.g. Prof. Abdul Majeed" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold text-muted text-uppercase">Department / Subject</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-mortarboard"></i></span>
-                                            <input type="text" class="form-control" id="newStaffDept" placeholder="e.g. Arabic Literature / General Faculty (Optional)">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold text-muted text-uppercase">Username (Login ID) *</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-at"></i></span>
-                                            <input type="text" class="form-control" id="newStaffUsername" placeholder="e.g. majeed" required autocomplete="username">
-                                        </div>
-                                        <small class="text-muted" style="font-size: 0.72rem;">Unique login username</small>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold text-muted text-uppercase">Password *</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-key"></i></span>
-                                            <input type="password" class="form-control" id="newStaffPassword" placeholder="Min 3 characters" required autocomplete="new-password">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold text-muted text-uppercase">Phone / Mobile (Optional)</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                                            <input type="text" class="form-control" id="newStaffPhone" placeholder="e.g. +91 9876543210">
-                                        </div>
-                                    </div>
-                                    <div class="col-12 text-end">
-                                        <button type="submit" class="btn btn-success fw-bold px-4 shadow-sm" id="btnSubmitNewStaff">
-                                            <i class="bi bi-check2-circle me-1"></i> Create / Update Teacher Account
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light small text-uppercase">
+                                    <tr>
+                                        <th class="ps-3">Name</th>
+                                        <th>Username</th>
+                                        <th>Password</th>
+                                        <th>Phone</th>
+                                        <th class="text-end pe-3">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="librariansTableBody">
+                                    <tr><td colspan="5" class="text-center py-4 text-muted">Loading librarians...</td></tr>
+                                </tbody>
+                            </table>
                         </div>
-                    </div>
-
-                    <!-- Existing Teachers Table -->
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                            <i class="bi bi-people-fill text-success"></i> Registered Teachers & Faculty (<span id="staffCountBadge">0</span>)
-                        </h6>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-outline-danger btn-sm" type="button" onclick="handleDeleteAllStaff()"><i class="bi bi-trash3-fill me-1"></i> Delete All</button>
-                            <button class="btn btn-outline-secondary btn-sm" type="button" onclick="loadStaff()"><i class="bi bi-arrow-repeat me-1"></i> Refresh</button>
-                        </div>
-                    </div>
-
-                    <div class="table-responsive rounded-3 border">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light text-uppercase small text-muted">
-                                <tr>
-                                    <th>Teacher</th>
-                                    <th>Username</th>
-                                    <th>Department</th>
-                                    <th>Taken Books</th>
-                                    <th class="text-end">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="staffTableBody">
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">Loading teachers...</td>
-                                </tr>
-                            </tbody>
-                        </table>
                     </div>
                 </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Close</button>
+                <div class="modal-footer bg-light p-3">
+                    <button type="button" class="btn btn-secondary fw-bold px-4" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Toast Notifications Container -->
+    <div id="adminToastContainer"></div>
+
+    <script>
+        // Enforce role permission: Only Administrator can access Admin Dashboard
+        enforcePageAuth(['admin']);
+    </script>
 </body>
 
 </html>

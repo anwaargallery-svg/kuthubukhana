@@ -5,13 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Principal & Executive Portal - Kuthbukhana Anwariyya</title>
-    <link rel="icon" type="image/png" href="../../../images/image.png">
-    <link rel="apple-touch-icon" href="../../../images/image.png">
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#1e293b">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Kuthbukhana">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -25,9 +18,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
-    <script src="../../../auth.js"></script>
-    <script src="../../../mobile-pwa.js"></script>
-    <script>enforcePageAuth(['principal', 'admin']);</script>
     <script defer src="../../../script.js"></script>
     <script defer src="principal.js"></script>
 </head>
@@ -47,16 +37,13 @@
                     </small>
                 </div>
             </a>
-            <div class="d-flex gap-2 flex-wrap align-items-center">
-                <span id="cloudSyncStatusPill" onclick="openCloudSyncModal()" style="cursor: pointer;"></span>
+            <div class="d-flex gap-2 flex-wrap">
                 <button class="btn btn-outline-light btn-sm fw-semibold" onclick="gohome()"><i class="bi bi-house-door me-1"></i> Home</button>
-                <button class="btn btn-outline-info btn-sm fw-semibold" onclick="openConnectModal()"><i class="bi bi-qr-code-scan me-1"></i> Phone QR</button>
                 <button class="btn btn-outline-primary btn-sm fw-semibold" onclick="openlibrary()"><i class="bi bi-book me-1"></i> Open Library</button>
                 <button class="btn btn-outline-success btn-sm fw-semibold" onclick="checkledger()"><i class="bi bi-journal-text me-1"></i> Check Ledger</button>
                 <button class="btn btn-primary btn-sm active fw-semibold"><i class="bi bi-person-badge me-1"></i> Principal View</button>
                 <button class="btn btn-outline-danger btn-sm fw-semibold" onclick="goadmin()"><i class="bi bi-speedometer2 me-1"></i> Admin Dashboard</button>
                 <button class="btn btn-outline-danger btn-sm fw-bold btn-close-library-toggle shadow-sm" onclick="toggleCloseLibrary()"><i class="bi bi-lock-fill me-1"></i> Close Library</button>
-                <button class="btn btn-outline-danger btn-sm fw-bold shadow-sm" onclick="handleUserLogout()"><i class="bi bi-box-arrow-right me-1"></i> Logout</button>
             </div>
         </div>
     </nav>
@@ -227,45 +214,12 @@
                 </div>
             </div>
         </div>
-    <!-- Connect Devices / Phone Access Modal -->
-    <div class="modal fade" id="connectModal" tabindex="-1" aria-labelledby="connectModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4">
-                <div class="modal-header bg-dark text-white rounded-top-4">
-                    <h5 class="modal-title fw-bold" id="connectModalLabel">
-                        <i class="bi bi-phone-fill text-primary me-2"></i>Connect Other Devices (Phones & PCs)
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4 text-center">
-                    <p class="text-muted small mb-3">Scan this QR Code with your smartphone camera to open the Principal Executive Portal or Library System directly on your phone:</p>
-                    
-                    <div class="p-3 bg-light rounded-4 d-inline-block border shadow-sm mb-3">
-                        <img id="indexQrCodeImg" src="" alt="QR Code" style="width: 200px; height: 200px; object-fit: contain;">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Wi-Fi Network Address</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control text-center fw-bold" id="indexNetworkUrlInput" readonly value="Loading...">
-                            <button class="btn btn-outline-primary" type="button" onclick="copyIndexNetworkUrl()">
-                                <i class="bi bi-clipboard me-1"></i> Copy
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-info py-2 small text-start mb-0">
-                        <i class="bi bi-shield-check me-1"></i>
-                        <strong>Executive Remote Access:</strong> You can view book availability and close the library remotely from any mobile phone or computer connected to the network or cloud server.
-                    </div>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary w-100 rounded-3" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
     </div>
 
+    <script>
+        // Enforce role permission: Only Principal and Admin can access Principal View
+        enforcePageAuth(['principal', 'admin']);
+    </script>
 </body>
 
 </html>

@@ -1,68 +1,53 @@
 {
-  "version": 1906,
-  "lastUpdated": 1792765515844,
-  "passwords": {
-    "admin": "mahin",
-    "principal": "principal123",
-    "staff": "staff123",
-    "librarian": "password123"
-  },
-  "librarians": [
-    {
-      "id": "lib_1792762297205_313",
-      "username": "mahin",
-      "password": "mahin",
-      "name": "mahin",
-      "role": "admin",
-      "createdAt": 1792762297206
-    }
-  ],
-  "staff": [
-    {
-      "id": "staff_1792763482082_421",
-      "username": "majeed",
-      "password": "421",
-      "name": "majeed",
-      "department": "General Faculty",
-      "phone": "",
-      "role": "staff",
-      "createdAt": 1792763482082
-    },
-    {
-      "id": "staff_1792763605266_161",
-      "username": "maje",
-      "password": "789",
-      "name": "mahin",
-      "department": "General Faculty",
-      "phone": "",
-      "role": "staff",
-      "createdAt": 1792763605266
-    }
-  ],
-  "cloudSync": {
-    "cloudUrl": "https://kuthubukhana.onrender.com",
-    "autoSync": true,
-    "lastSynced": 1792765515844
-  },
-  "books": {},
-  "ledger": [
-    {
-      "id": 1792666082683,
-      "rollNo": "18",
-      "studentName": "suhail",
-      "classDiv": "9",
-      "bookId": "H-001",
-      "bookTitle": "صحيح البخاري",
+  "books": {
+    "H-001": {
+      "title": "صحيح البخاري",
       "author": "imam bukhari",
-      "issueDate": "2026-10-22",
-      "dueDate": "2026-11-02",
-      "allowedDays": 10,
-      "returnDate": "2026-10-22",
-      "status": "Returned",
-      "fineAmount": 0,
-      "finePaid": false
+      "section": "H",
+      "sectionName": "HADHEES",
+      "cover": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4bd2JEXB-aRzdUSPX1J9reK-gGHFLwtruTpRBktFeJ_UCT68GTmENBJhU&s=10",
+      "status": "Issued",
+      "issuedTo": "SUHAIL (Roll #2)",
+      "issueDate": "2026-10-07",
+      "dueDate": "2026-10-18",
+      "allowedDays": 10
+    },
+    "H-002": {
+      "title": "swaheeh muslim",
+      "author": "imam muslim",
+      "section": "H",
+      "sectionName": "HADHEES",
+      "cover": "https://m.media-amazon.com/images/I/81cLxtv4FrL._UF1000,1000_QL80_.jpg",
+      "status": "Issued",
+      "issuedTo": "majeed (Roll #0123)",
+      "issueDate": "2026-10-24",
+      "dueDate": "2026-10-29",
+      "allowedDays": 5
+    },
+    "QS-009": {
+      "title": "quiz",
+      "author": "Author #QS-009",
+      "section": "QS",
+      "sectionName": "QUIZ",
+      "cover": "https://covers.openlibrary.org/b/id/QS-009-M.jpg",
+      "status": "Issued",
+      "issuedTo": "AJMAL (Roll #018)",
+      "issueDate": "2026-10-24",
+      "dueDate": "2026-11-04",
+      "allowedDays": 10
+    },
+    "QS-007": {
+      "title": "quiz",
+      "author": "MCAJEED",
+      "cover": "https://covers.openlibrary.org/b/id/QS-007-M.jpg",
+      "status": "Available",
+      "issuedTo": null,
+      "issueDate": null,
+      "dueDate": null,
+      "allowedDays": 10
     }
-  ],
+  },
+  "ledger": [],
   "categories": {
     "H": "HADHEES",
     "PS": "PSYCOLOGY",
@@ -76,7 +61,7 @@
     "PH": "PROPHETS",
     "BS": "BALA SAHITYAM",
     "ST": "STORY",
-    "SY": "STUDY",
+    "STUDY": "SY",
     "SJ": "SUNNATH JAMAATH",
     "WH": "WORLD HISTORY",
     "PK": "PRASANGA KALA",
@@ -86,16 +71,20 @@
     "LR": "LITRATUR",
     "BH": "BIOGRAPHY"
   },
-  "students": [
-    {
-      "rollNo": "15",
-      "name": "mursal",
-      "classDiv": "muthawal"
-    }
-  ],
-  "classes": [
-    "8",
-    "9"
-  ],
-  "isLibraryClosed": false
+  "students": [],
+  "isLibraryClosed": false,
+  "auth": {
+    "adminPassword": "admin",
+    "principalPassword": "admin",
+    "librarians": [
+      {
+        "id": "lib_default",
+        "name": "Chief Librarian",
+        "username": "librarian",
+        "password": "123",
+        "phone": "9876543210",
+        "createdAt": "2026-10-24T15:12:29.418Z"
+      }
+    ]
+  }
 }
